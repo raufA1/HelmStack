@@ -47,14 +47,8 @@ plan: ## STATUS.md + NEXT_STEPS.md from docs
 resume: ## FOCUS_LIST from NEXT_STEPS
 	@bash scripts/extract_next_steps.sh "$(PLANS_DIR)"
 
-eod: ## snapshot + commit + tag + push (safe with no HEAD)
-	@bash scripts/snapshot.sh "$(SNAP_DIR)"
-	@echo "- $$(date '+%Y-%m-%d %H:%M') EOD checkpoint" >> SESSION_LOG.md
-	@git add -A
-	@git commit -m "chore(session): EOD checkpoint" --no-verify || true
-	@git tag eod-$$(date '+%Y%m%d-%H%M') || true
-	@git push || true
-	@git push --tags || true
+eod: ## ✅ End of day - snapshot + git commit/tag/push (safe with no HEAD)
+	@bash scripts/eod.sh "$(SNAP_DIR)" "$(PLANS_DIR)"
 
 snapshot: ## Diff/log snapshot
 	@bash scripts/snapshot.sh "$(SNAP_DIR)"
@@ -107,6 +101,12 @@ next:   ## 📌 Show next steps
 	@sed -n '1,80p' "$(PLANS_DIR)/NEXT_STEPS.md" 2>/dev/null || echo "No NEXT_STEPS.md yet"
 focus:  ## 🎯 Show focus list
 	@sed -n '1,80p' "$(PLANS_DIR)/FOCUS_LIST.md" 2>/dev/null || echo "No FOCUS_LIST.md yet"
+memory: ## 🧠 Show AI memory summary
+	@bash scripts/ai_memory_refresh.sh "$(PLANS_DIR)" "$(MEM_DIR)" "$(RESEARCH_DIR)"
+	@cat "$(MEM_DIR)/MEMORY.md" 2>/dev/null || echo "No memory summary yet"
+context: ## 🎯 Show quick context
+	@bash scripts/ai_memory_refresh.sh "$(PLANS_DIR)" "$(MEM_DIR)" "$(RESEARCH_DIR)" >/dev/null
+	@cat "$(MEM_DIR)/CONTEXT.md" 2>/dev/null || echo "No context yet"
 log:    ## 📜 Show session log head
 	@sed -n '1,120p' SESSION_LOG.md 2>/dev/null || echo "No SESSION_LOG yet"
 
@@ -122,9 +122,66 @@ push:   ## ⬆️ Push and tags
 	@git push || true
 	@git push --tags || true
 
-help:   ## Show help
-	@echo ""; echo "🚀 HelmStack Commands"; echo ""
-	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' Makefile | sed -E 's/:.*?## /  - /'
-	@echo ""; echo "Docs: $(PLANS_DIR) | Input: $(INCOMING_DIR) | Memory: $(MEM_DIR)"; echo ""
+help:   ## 📖 Show colorful help
+	@bash scripts/help.sh
 
-.PHONY: start go fix work done save plan resume eod snapshot ask check yes no end build ideas setup status next focus log clean commit push help
+version: ## 📋 Show HelmStack version
+	@echo "🚀 HelmStack v1.0.0-M5"
+	@echo "Document-first, AI-powered project flow"
+	@echo "Repository: https://github.com/raufA1/HelmStack"
+
+fix-lint: ## 🔧 Fix linting issues
+	@echo "🔧 Running ruff with auto-fix..."
+	@ruff check scripts/ --fix || echo "Install ruff: pip install ruff"
+	@echo "✅ Linting fixes applied"
+
+fix-format: ## 🎨 Fix code formatting
+	@echo "🎨 Running black formatter..."
+	@black scripts/ || echo "Install black: pip install black"
+	@echo "✅ Code formatting applied"
+
+fix-yaml: ## 📝 Fix YAML formatting
+	@echo "📝 Checking YAML files..."
+	@yamllint .github/workflows/ .pre-commit-config.yaml || echo "Install yamllint: pip install yamllint"
+	@echo "✅ YAML files checked"
+
+gh-create: ## 🏗️ Create GitHub repository (PRIVATE=true/false)
+	@echo "🏗️ Creating GitHub repository..."
+	@if [ "$(PRIVATE)" = "true" ]; then \
+		gh repo create --private $(NAME) --description "$(DESC)" --clone=false; \
+	else \
+		gh repo create --public $(NAME) --description "$(DESC)" --clone=false; \
+	fi
+	@git remote add origin git@github.com:$(shell gh auth status | grep 'Logged in' | cut -d' ' -f6)/$(NAME).git
+	@echo "✅ Repository created and remote added"
+
+gh-push: ## 🚀 Initial push to GitHub
+	@echo "🚀 Pushing to GitHub..."
+	@git push -u origin main
+	@echo "✅ Pushed to GitHub"
+
+pr: ## 📋 Create Pull Request
+	@echo "📋 Creating Pull Request..."
+	@gh pr create --title "$(TITLE)" --body "$(BODY)" || echo "Usage: make pr TITLE='Title' BODY='Description'"
+
+analyzers: ## 🔍 List available analyzers
+	@python3 scripts/analyze.py --list-analyzers workspace/incoming
+
+blockers: ## 🚫 Show blockers from analysis
+	@python3 scripts/analyze.py --blockers workspace/incoming workspace/plans
+	@cat workspace/plans/BLOCKERS.md 2>/dev/null || echo "No blockers identified"
+
+productivity: ## 📊 Real productivity metrics
+	@echo "📊 Productivity Metrics"
+	@python3 scripts/analytics.py --productivity || echo "No session data available"
+
+timeline: ## 📅 Project timeline
+	@echo "📅 Project Timeline"
+	@if [ -d .git ]; then git log --oneline --graph --decorate; else echo "Not a git repository"; fi
+
+dependencies: ## 🔗 Dependency analysis
+	@echo "🔗 Analyzing dependencies..."
+	@python3 scripts/analyze.py --dependencies workspace/incoming workspace/plans
+	@cat workspace/plans/DEPENDENCIES.md 2>/dev/null || echo "No dependencies analyzed"
+
+.PHONY: start go fix work done save plan resume eod snapshot ask check yes no end build ideas setup status next focus log clean commit push help version fix-lint fix-format fix-yaml gh-create gh-push pr analyzers blockers productivity timeline dependencies
