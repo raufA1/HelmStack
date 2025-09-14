@@ -20,8 +20,14 @@ jobs:
         id: changelog
         run: |
           echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-          echo "## Changes" >> $GITHUB_OUTPUT
-          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD~1)..HEAD >> $GITHUB_OUTPUT
+          if [ -f CHANGELOG.md ]; then
+            echo "## Release Notes" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            bash scripts/extract_changelog.sh CHANGELOG.md >> $GITHUB_OUTPUT
+          else
+            echo "## Changes" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD~1)..HEAD >> $GITHUB_OUTPUT
+          fi
           echo "" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
@@ -92,6 +98,14 @@ jobs:
             --exclude='snapshots' \
             --exclude='workspace/processed' \
             --exclude='__pycache__' \
+            --exclude='memory/MEMORY.md' \
+            --exclude='memory/CONTEXT.md' \
+            --exclude='SESSION_LOG.md' \
+            --exclude='*.tar.gz' \
+            --exclude='*.zip' \
+            --exclude='.vscode' \
+            --exclude='.idea' \
+            --exclude='*.tmp' \
             .
 
       - name: Upload release artifact

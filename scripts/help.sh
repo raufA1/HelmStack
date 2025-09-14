@@ -79,6 +79,12 @@ echo -e "  ${GREEN}memory/${NC}              - AI memory & context"
 echo -e "  ${GREEN}snapshots/${NC}           - Session snapshots"
 echo ""
 
+echo -e "${BOLD}${PURPLE}🚀 Command Aliases${NC}"
+echo -e "  ${YELLOW}go${NC}        = ${CYAN}start${NC}    # Quick project initialization"
+echo -e "  ${YELLOW}plan${NC}      = ${CYAN}fix${NC}      # Refresh planning documents"
+echo -e "  ${YELLOW}save${NC}      = ${CYAN}snapshot${NC} # Create session snapshot"
+echo ""
+
 echo -e "${BOLD}${PURPLE}💡 Quick Start${NC}"
 echo -e "  1. ${CYAN}make start NAME=\"MyProject\" DESC=\"Description\"${NC}"
 echo -e "  2. ${CYAN}make fix${NC}     # Generate initial plan"

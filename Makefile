@@ -15,7 +15,11 @@ DESC ?= Project initialized via HelmStack
 DOC  ?=
 GLOB ?=
 
-go: start ## alias
+# Aliases for common commands
+go: start ## 🚀 Alias for 'start' - quick project initialization
+plan: ## 🧭 Alias for 'fix' - refresh planning documents
+	@$(MAKE) fix
+save: snapshot ## 💾 Alias for 'snapshot' - create session snapshot
 
 start: ## 🔥 Full setup + smart start (optional DOC=path)
 	@mkdir -p "$(INCOMING_DIR)" "$(PROCESSED_DIR)" "$(PLANS_DIR)" "$(RESEARCH_DIR)" "$(SNAP_DIR)"
@@ -27,22 +31,19 @@ start: ## 🔥 Full setup + smart start (optional DOC=path)
 	@bash scripts/smart_start.sh "$(NAME)" "$(DESC)" "$(DOCS_DIR)" "$(INCOMING_DIR)" "$(PLANS_DIR)"
 	@echo "→ Next: make fix | make work | make done"
 
-fix: plan ## 🧭 Refresh plan
+fix: ## 🧭 Refresh plan (generates STATUS.md, NEXT_STEPS.md)
+	@bash scripts/run_analyzer.sh "$(INCOMING_DIR)" "$(PLANS_DIR)"
 	@bash scripts/ai_memory_refresh.sh "$(PLANS_DIR)" "$(MEM_DIR)"
 
 work: ## 🎯 Build FOCUS_LIST from NEXT_STEPS
 	@bash scripts/extract_next_steps.sh "$(PLANS_DIR)"
-	@$(MAKE) plan
 	@bash scripts/ai_memory_refresh.sh "$(PLANS_DIR)" "$(MEM_DIR)"
 
 done: ## 🌅 End of day (snapshot + commit/tag/push; safe if no HEAD yet)
 	@bash scripts/ai_memory_refresh.sh "$(PLANS_DIR)" "$(MEM_DIR)"
 	@$(MAKE) eod
 
-save: snapshot ## 💾 Snapshot only
 
-plan: ## STATUS.md + NEXT_STEPS.md from docs
-	@bash scripts/run_analyzer.sh "$(INCOMING_DIR)" "$(PLANS_DIR)"
 
 resume: ## FOCUS_LIST from NEXT_STEPS
 	@bash scripts/extract_next_steps.sh "$(PLANS_DIR)"
@@ -184,4 +185,16 @@ dependencies: ## 🔗 Dependency analysis
 	@python3 scripts/analyze.py --dependencies workspace/incoming workspace/plans
 	@cat workspace/plans/DEPENDENCIES.md 2>/dev/null || echo "No dependencies analyzed"
 
-.PHONY: start go fix work done save plan resume eod snapshot ask check yes no end build ideas setup status next focus log clean commit push help version fix-lint fix-format fix-yaml gh-create gh-push pr analyzers blockers productivity timeline dependencies
+bump-patch: ## 🔢 Bump patch version (1.0.0 → 1.0.1)
+	@bash scripts/bump_version.sh patch
+
+bump-minor: ## 🔢 Bump minor version (1.0.0 → 1.1.0)
+	@bash scripts/bump_version.sh minor
+
+bump-major: ## 🔢 Bump major version (1.0.0 → 2.0.0)
+	@bash scripts/bump_version.sh major
+
+bump-dry: ## 🔍 Dry run version bump (shows what would change)
+	@bash scripts/bump_version.sh patch dry-run
+
+.PHONY: start go fix work done save plan resume eod snapshot ask check yes no end build ideas setup status next focus log clean commit push help version fix-lint fix-format fix-yaml gh-create gh-push pr analyzers blockers productivity timeline dependencies bump-patch bump-minor bump-major bump-dry

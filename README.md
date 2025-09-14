@@ -4,7 +4,12 @@
 
 [![GitHub](https://img.shields.io/badge/GitHub-raufA1%2FHelmStack-blue)](https://github.com/raufA1/HelmStack)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.0.0--M5-orange.svg)](CHANGELOG.md)
+[![CI](https://github.com/raufA1/HelmStack/actions/workflows/ci.yml/badge.svg)](https://github.com/raufA1/HelmStack/actions/workflows/ci.yml)
+[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](.pre-commit-config.yaml)
+[![Commands](https://img.shields.io/badge/Commands-47-blue.svg)](COMMANDS.md)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](scripts/)
+[![Shell](https://img.shields.io/badge/Shell-Bash-green.svg)](scripts/)
 
 HelmStack transforms any set of documents into actionable plans with **document-first**, **repo-as-memory**, and **human-in-the-loop** research workflows.
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 COMMAND="${1:-}"
-ADR_DIR="${2:-memory/decisions}"
+ADR_DIR="${2:-docs/adr}"
 TEMPLATE_DIR="${3:-templates/adr}"
 
 usage() {

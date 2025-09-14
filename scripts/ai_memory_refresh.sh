@@ -85,9 +85,9 @@ echo "" >> "$MEMORY_FILE"
 
 # Add recent decisions (from ADR system if available)
 echo "### 🏗️ Architecture Decisions" >> "$MEMORY_FILE"
-if [ -d "$MEM_DIR/decisions" ] && [ "$(ls -A "$MEM_DIR/decisions")" ]; then
+if [ -d "docs/adr" ] && [ "$(ls -A "docs/adr")" ]; then
     echo "  **Recent ADRs:**" >> "$MEMORY_FILE"
-    ls "$MEM_DIR/decisions"/ADR-*.md 2>/dev/null | tail -5 | while read -r adr_file; do
+    ls "docs/adr"/ADR-*.md 2>/dev/null | tail -5 | while read -r adr_file; do
         [ -f "$adr_file" ] || continue
         adr_title=$(grep "^# ADR-" "$adr_file" | head -1 | cut -d' ' -f2- || echo "Unknown")
         echo "  - $(basename "$adr_file" .md): $adr_title" >> "$MEMORY_FILE"

@@ -12,11 +12,28 @@ build/
 # Node
 node_modules/
 
-# Repo artifacts
+# Development artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Template cleanup - exclude from zip distributions
+.git/
+*.tar.gz
+*.zip
+helmstack-*.tar.gz
+
+# HelmStack workspace artifacts
 snapshots/
 workspace/processed/
 workspace/plans/FOCUS_LIST.md
+memory/MEMORY.md
+memory/CONTEXT.md
+SESSION_LOG.md
 
 # OS
 .DS_Store
 Thumbs.db
+*.tmp

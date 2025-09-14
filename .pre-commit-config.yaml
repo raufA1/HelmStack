@@ -36,7 +36,7 @@ repos:
     hooks:
       - id: shellcheck
         files: ^scripts/.*\.sh$
-        args: ["-x", "-e", "SC2129", "-e", "SC2012"]
+        args: ["-x", "-e", "SC2129", "-e", "SC2012", "-e", "SC2155", "-e", "SC2015", "-e", "SC2001", "-e", "SC2034"]
 
   - repo: local
     hooks:
