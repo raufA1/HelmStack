@@ -8,6 +8,55 @@ def ideas(text):
     return ["- [ ] " + re.sub(r"^\s*[-*]\s+","",ln).strip()
             for ln in text.splitlines() if re.match(r"^\s*[-*]\s+", ln)]
 
+def extract_epics(text):
+    """Extract epic-level headings (## Epic: ... or ## ...)"""
+    epics = []
+    for line in text.splitlines():
+        if re.match(r"^##\s+Epic:\s*", line):
+            epic_name = re.sub(r"^##\s+Epic:\s*", "", line).strip()
+            epics.append(f"- Epic: {epic_name}")
+        elif re.match(r"^##\s+", line):
+            heading = re.sub(r"^##\s+", "", line).strip()
+            if not heading.lower().startswith(('status', 'summary', 'overview', 'notes', 'background')):
+                epics.append(f"- Epic: {heading}")
+    return epics
+
+def extract_milestones(text):
+    """Extract milestone headings (## M1: ... or ## Milestone ...)"""
+    milestones = []
+    for line in text.splitlines():
+        if re.match(r"^##\s+M\d+:\s*", line):
+            milestone = re.sub(r"^##\s+", "", line).strip()
+            milestones.append(f"- {milestone}")
+        elif re.match(r"^##\s+Milestone\s*", line):
+            milestone = re.sub(r"^##\s+", "", line).strip()
+            milestones.append(f"- {milestone}")
+    return milestones
+
+def add_epic_tags(text):
+    """Add @epic:NAME tags to tasks that appear under epic headings"""
+    lines = text.splitlines()
+    result = []
+    current_epic = None
+
+    for line in lines:
+        # Check if this is an epic heading
+        if re.match(r"^##\s+", line):
+            epic_name = re.sub(r"^##\s+", "", line).strip()
+            if not epic_name.lower().startswith(('status', 'summary', 'overview', 'notes', 'background')):
+                current_epic = epic_name.replace(" ", "_").lower()
+
+        # Add epic tag to tasks
+        if current_epic and re.match(r"^\s*[-*]\s+", line):
+            task = re.sub(r"^\s*[-*]\s+", "- [ ] ", line).strip()
+            if not f"@epic:{current_epic}" in task:
+                task += f" @epic:{current_epic}"
+            result.append(task)
+        elif re.match(r"^\s*[-*]\s+", line):
+            result.append("- [ ] " + re.sub(r"^\s*[-*]\s+", "", line).strip())
+
+    return result
+
 def merge_ideas_idempotent(existing_content, new_ideas):
     """Merge new ideas with existing NEXT_STEPS without duplicates"""
     lines = existing_content.splitlines()
@@ -38,15 +87,39 @@ def merge_ideas_idempotent(existing_content, new_ideas):
 def main():
     import argparse; ap=argparse.ArgumentParser()
     ap.add_argument("--ideas", action="store_true")
+    ap.add_argument("--epics", action="store_true")
+    ap.add_argument("--milestones", action="store_true")
     ap.add_argument("incoming", nargs="?", default="workspace/incoming")
     ap.add_argument("plans",    nargs="?", default="workspace/plans")
     a=ap.parse_args(); inc=pathlib.Path(a.incoming); pl=pathlib.Path(a.plans); pl.mkdir(parents=True, exist_ok=True)
     docs = sorted(inc.glob("*.md"));
     if not docs: print("autoplan: no docs"); return
 
+    # Combine all docs text for analysis
+    combined_text = "\n".join([read(d) for d in docs])
+
+    if a.epics:
+        # Extract epics and save to EPICS.md
+        epics = extract_epics(combined_text)
+        epics_file = pl/"EPICS.md"
+        content = "# EPICS\n\n" + "\n".join(epics) + "\n"
+        epics_file.write_text(content, encoding="utf-8")
+        print(f"autoplan: EPICS.md updated with {len(epics)} epics"); return
+
+    if a.milestones:
+        # Extract milestones and save to MILESTONES.md
+        milestones = extract_milestones(combined_text)
+        milestones_file = pl/"MILESTONES.md"
+        content = "# MILESTONES\n\n" + "\n".join(milestones) + "\n"
+        milestones_file.write_text(content, encoding="utf-8")
+        print(f"autoplan: MILESTONES.md updated with {len(milestones)} milestones"); return
+
     if a.ideas:
-        # Extract ideas from all docs
-        todo=[]; [todo.extend(ideas(read(d))) for d in docs]
+        # Extract ideas with epic tags
+        todo = add_epic_tags(combined_text)
+        if not todo:
+            todo = []
+            [todo.extend(ideas(read(d))) for d in docs]
 
         # Read existing NEXT_STEPS.md if it exists
         next_steps_file = pl/"NEXT_STEPS.md"

@@ -74,6 +74,12 @@ build: ## 🛠 Doc→README synthesizer
 	@python3 scripts/autoplan.py "$(INCOMING_DIR)" "$(PLANS_DIR)" || true
 ideas: ## 💡 Extract TODOs from docs
 	@python3 scripts/autoplan.py --ideas "$(INCOMING_DIR)" "$(PLANS_DIR)" || true
+epics: ## 🎯 Extract EPICs from docs
+	@python3 scripts/autoplan.py --epics "$(INCOMING_DIR)" "$(PLANS_DIR)" || true
+milestones: ## 🏆 Extract MILESTONEs from docs
+	@python3 scripts/autoplan.py --milestones "$(INCOMING_DIR)" "$(PLANS_DIR)" || true
+template: ## 📝 Generate template (TYPE=issue|todo|research|epic FILE=output.md)
+	@bash scripts/templates.sh "$(TYPE)" "$(FILE)" || echo "Usage: make template TYPE=issue FILE=my-issue.md"
 setup: ## ⚙️ GitHub bootstrap (via gh, optional)
 	@bash scripts/bootstrap.sh || true
 
