@@ -78,8 +78,26 @@ epics: ## 🎯 Extract EPICs from docs
 	@python3 scripts/autoplan.py --epics "$(INCOMING_DIR)" "$(PLANS_DIR)" || true
 milestones: ## 🏆 Extract MILESTONEs from docs
 	@python3 scripts/autoplan.py --milestones "$(INCOMING_DIR)" "$(PLANS_DIR)" || true
+analyze: ## 🔍 Analyze documents (ANALYZER=markdown|risk|scope PATH=file/dir)
+	@python3 scripts/analyze.py "$(PATH)" $(if $(ANALYZER),--analyzers $(ANALYZER),) || echo "Usage: make analyze PATH=workspace/incoming"
+analyzers: ## 📋 List available analyzers
+	@python3 scripts/analyze.py --list-analyzers workspace/incoming
 template: ## 📝 Generate template (TYPE=issue|todo|research|epic FILE=output.md)
 	@bash scripts/templates.sh "$(TYPE)" "$(FILE)" || echo "Usage: make template TYPE=issue FILE=my-issue.md"
+adr-new: ## 📋 Create new ADR (TITLE="Decision title")
+	@bash scripts/adr.sh new "$(TITLE)" || echo "Usage: make adr-new TITLE='Use PostgreSQL for database'"
+adr-list: ## 📋 List all ADRs
+	@bash scripts/adr.sh list
+adr-accept: ## ✅ Accept ADR (NUM=001)
+	@bash scripts/adr.sh accept "$(NUM)" || echo "Usage: make adr-accept NUM=001"
+adr-status: ## 📊 Show ADR status (NUM=001)
+	@bash scripts/adr.sh status "$(NUM)" || echo "Usage: make adr-status NUM=001"
+analytics: ## 📊 Show today's session analytics
+	@python3 scripts/analytics.py || echo "No session data available"
+trends: ## 📈 Show productivity trends (DAYS=7)
+	@python3 scripts/analytics.py --trends $(or $(DAYS),7) || echo "Usage: make trends DAYS=7"
+extract: ## 📄 Extract text from PDF/DOCX (FILE=input.pdf OUTPUT=output.md)
+	@python3 scripts/extract_text.py "$(FILE)" $(if $(OUTPUT),-o "$(OUTPUT)",) || echo "Usage: make extract FILE=doc.pdf OUTPUT=doc.md"
 setup: ## ⚙️ GitHub bootstrap (via gh, optional)
 	@bash scripts/bootstrap.sh || true
 
