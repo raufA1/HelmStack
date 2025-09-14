@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
-import sys, re, pathlib
+import re
+import pathlib
+
+
 def read(p):
-    try: return pathlib.Path(p).read_text(encoding="utf-8")
-    except: return ""
+    try:
+        return pathlib.Path(p).read_text(encoding="utf-8")
+    except:
+        return ""
+
 
 def ideas(text):
-    return ["- [ ] " + re.sub(r"^\s*[-*]\s+","",ln).strip()
-            for ln in text.splitlines() if re.match(r"^\s*[-*]\s+", ln)]
+    return [
+        "- [ ] " + re.sub(r"^\s*[-*]\s+", "", ln).strip()
+        for ln in text.splitlines()
+        if re.match(r"^\s*[-*]\s+", ln)
+    ]
+
 
 def extract_epics(text):
     """Extract epic-level headings (## Epic: ... or ## ...)"""
@@ -17,9 +27,12 @@ def extract_epics(text):
             epics.append(f"- Epic: {epic_name}")
         elif re.match(r"^##\s+", line):
             heading = re.sub(r"^##\s+", "", line).strip()
-            if not heading.lower().startswith(('status', 'summary', 'overview', 'notes', 'background')):
+            if not heading.lower().startswith(
+                ("status", "summary", "overview", "notes", "background")
+            ):
                 epics.append(f"- Epic: {heading}")
     return epics
+
 
 def extract_milestones(text):
     """Extract milestone headings (## M1: ... or ## Milestone ...)"""
@@ -33,6 +46,7 @@ def extract_milestones(text):
             milestones.append(f"- {milestone}")
     return milestones
 
+
 def add_epic_tags(text):
     """Add @epic:NAME tags to tasks that appear under epic headings"""
     lines = text.splitlines()
@@ -43,19 +57,22 @@ def add_epic_tags(text):
         # Check if this is an epic heading
         if re.match(r"^##\s+", line):
             epic_name = re.sub(r"^##\s+", "", line).strip()
-            if not epic_name.lower().startswith(('status', 'summary', 'overview', 'notes', 'background')):
+            if not epic_name.lower().startswith(
+                ("status", "summary", "overview", "notes", "background")
+            ):
                 current_epic = epic_name.replace(" ", "_").lower()
 
         # Add epic tag to tasks
         if current_epic and re.match(r"^\s*[-*]\s+", line):
             task = re.sub(r"^\s*[-*]\s+", "- [ ] ", line).strip()
-            if not f"@epic:{current_epic}" in task:
+            if f"@epic:{current_epic}" not in task:
                 task += f" @epic:{current_epic}"
             result.append(task)
         elif re.match(r"^\s*[-*]\s+", line):
             result.append("- [ ] " + re.sub(r"^\s*[-*]\s+", "", line).strip())
 
     return result
+
 
 def merge_ideas_idempotent(existing_content, new_ideas):
     """Merge new ideas with existing NEXT_STEPS without duplicates"""
@@ -78,61 +95,105 @@ def merge_ideas_idempotent(existing_content, new_ideas):
 
     # Append new tasks to existing content
     if new_tasks:
-        if not existing_content.strip().endswith('\n'):
-            existing_content += '\n'
-        existing_content += '\n'.join(new_tasks) + '\n'
+        if not existing_content.strip().endswith("\n"):
+            existing_content += "\n"
+        existing_content += "\n".join(new_tasks) + "\n"
 
     return existing_content
 
+
 def main():
-    import argparse; ap=argparse.ArgumentParser()
+    import argparse
+
+    ap = argparse.ArgumentParser()
     ap.add_argument("--ideas", action="store_true")
     ap.add_argument("--epics", action="store_true")
     ap.add_argument("--milestones", action="store_true")
     ap.add_argument("incoming", nargs="?", default="workspace/incoming")
-    ap.add_argument("plans",    nargs="?", default="workspace/plans")
-    a=ap.parse_args(); inc=pathlib.Path(a.incoming); pl=pathlib.Path(a.plans); pl.mkdir(parents=True, exist_ok=True)
-    docs = sorted(inc.glob("*.md"));
-    if not docs: print("autoplan: no docs"); return
+    ap.add_argument("plans", nargs="?", default="workspace/plans")
+    a = ap.parse_args()
+    inc = pathlib.Path(a.incoming)
+    pl = pathlib.Path(a.plans)
+    pl.mkdir(parents=True, exist_ok=True)
+    docs = sorted(inc.glob("*.md"))
+    if not docs:
+        print("autoplan: no markdown docs found in", inc)
+        return
 
-    # Combine all docs text for analysis
-    combined_text = "\n".join([read(d) for d in docs])
+    # Combine all docs text for analysis with error handling
+    combined_text = ""
+    valid_docs = []
+    for doc in docs:
+        content = read(doc)
+        if content:
+            combined_text += content + "\n"
+            valid_docs.append(doc)
+        else:
+            print(f"autoplan: warning - could not read {doc}")
+
+    if not combined_text.strip():
+        print("autoplan: no readable content found")
+        return
 
     if a.epics:
         # Extract epics and save to EPICS.md
         epics = extract_epics(combined_text)
-        epics_file = pl/"EPICS.md"
-        content = "# EPICS\n\n" + "\n".join(epics) + "\n"
+        epics_file = pl / "EPICS.md"
+        if epics:
+            content = "# EPICS\n\n" + "\n".join(epics) + "\n"
+        else:
+            content = "# EPICS\n\n*No epics found in source documents*\n\nTo add epics, use headings like:\n- `## Epic: Feature Name`\n- `## Major Component`\n"
         epics_file.write_text(content, encoding="utf-8")
-        print(f"autoplan: EPICS.md updated with {len(epics)} epics"); return
+        print(
+            f"autoplan: EPICS.md updated with {len(epics)} epics from {len(valid_docs)} docs"
+        )
+        return
 
     if a.milestones:
         # Extract milestones and save to MILESTONES.md
         milestones = extract_milestones(combined_text)
-        milestones_file = pl/"MILESTONES.md"
-        content = "# MILESTONES\n\n" + "\n".join(milestones) + "\n"
+        milestones_file = pl / "MILESTONES.md"
+        if milestones:
+            content = "# MILESTONES\n\n" + "\n".join(milestones) + "\n"
+        else:
+            content = "# MILESTONES\n\n*No milestones found in source documents*\n\nTo add milestones, use headings like:\n- `## M1: Foundation`\n- `## Milestone 2: Feature Complete`\n"
         milestones_file.write_text(content, encoding="utf-8")
-        print(f"autoplan: MILESTONES.md updated with {len(milestones)} milestones"); return
+        print(
+            f"autoplan: MILESTONES.md updated with {len(milestones)} milestones from {len(valid_docs)} docs"
+        )
+        return
 
     if a.ideas:
         # Extract ideas with epic tags
         todo = add_epic_tags(combined_text)
         if not todo:
             todo = []
-            [todo.extend(ideas(read(d))) for d in docs]
+            for doc in valid_docs:
+                todo.extend(ideas(read(doc)))
 
         # Read existing NEXT_STEPS.md if it exists
-        next_steps_file = pl/"NEXT_STEPS.md"
+        next_steps_file = pl / "NEXT_STEPS.md"
         if next_steps_file.exists():
             existing_content = next_steps_file.read_text(encoding="utf-8")
             updated_content = merge_ideas_idempotent(existing_content, todo)
         else:
-            updated_content = "# NEXT_STEPS\n\n" + "\n".join(todo) + "\n"
+            if todo:
+                updated_content = "# NEXT_STEPS\n\n" + "\n".join(todo) + "\n"
+            else:
+                updated_content = "# NEXT_STEPS\n\n*No actionable items found in source documents*\n\nTo add tasks, use bullet points like:\n- Implement feature X\n- Test component Y\n- Document API Z\n"
 
         next_steps_file.write_text(updated_content, encoding="utf-8")
-        print(f"autoplan: NEXT_STEPS updated with {len(todo)} ideas"); return
+        print(
+            f"autoplan: NEXT_STEPS updated with {len(todo)} ideas from {len(valid_docs)} docs"
+        )
+        return
 
-    out = ["# Project\n\n## Overview\n\n"] + [f"# Source: {d.name}\n{read(d)}\n---\n" for d in docs]
-    pathlib.Path("README.md").write_text("".join(out), encoding="utf-8"); print("autoplan: README synthesized")
+    out = ["# Project\n\n## Overview\n\n"] + [
+        f"# Source: {d.name}\n{read(d)}\n---\n" for d in docs
+    ]
+    pathlib.Path("README.md").write_text("".join(out), encoding="utf-8")
+    print("autoplan: README synthesized")
 
-if __name__ == "__main__": main()
+
+if __name__ == "__main__":
+    main()

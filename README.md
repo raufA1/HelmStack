@@ -25,71 +25,87 @@ HelmStack transforms any set of documents into actionable plans with **document-
 
 ## 🚀 Quick Start
 
-### 1. Setup New Project
+### 1. Setup hs runner
 ```bash
-# Clone or use template
+# Clone repository
 git clone git@github.com:raufA1/HelmStack.git myproject
 cd myproject
 
-# Initialize with your documents
-make start NAME="MyProject" DESC="One-liner description" DOC=spec.md
+# Set up hs alias (add to ~/.bashrc or ~/.zshrc)
+alias hs="make -f Helmfile"
+
+# Or use directly with make
+export HELMFILE=Helmfile
 ```
 
-### 2. Daily Workflow
+### 2. Setup New Project
+```bash
+# Initialize with your documents
+hs start NAME="MyProject" DESC="One-liner description" DOC=spec.md
+
+# Verify setup
+hs help
+hs version
+```
+
+### 3. Daily Workflow
 ```bash
 # Morning: Generate plan from documents
-make fix                    # Create STATUS.md, NEXT_STEPS.md
-make work                   # Build FOCUS_LIST.md
+hs fix                      # Create STATUS.md, NEXT_STEPS.md
+hs work                     # Build FOCUS_LIST.md
 
 # During work: Research workflow
-make ask TOPIC="Which database to use?"
+hs ask TOPIC="Which database to use?"
 # Edit research files, then:
-make check                  # Review findings
-make yes                    # Approve → adds to NEXT_STEPS
+hs check                    # Review findings
+hs yes                      # Approve → adds to NEXT_STEPS
 
 # End of day: Snapshot and analytics
-make done                   # Commit, tag, push, analytics
-make analytics             # View productivity metrics
+hs done                     # Commit, tag, push, analytics
+hs analytics               # View productivity metrics
 ```
 
-### 3. Advanced Features
+### 4. Advanced Features
 ```bash
 # Document analysis
-make analyze PATH=workspace/incoming     # Multi-analyzer pipeline
-make epics                              # Extract epics from docs
-make milestones                         # Extract milestones
+hs analyze PATH=workspace/incoming      # Multi-analyzer pipeline
+hs epics                               # Extract epics from docs
+hs milestones                          # Extract milestones
 
 # Architecture decisions
-make adr-new TITLE="Use PostgreSQL"     # Create decision record
-make adr-accept NUM=001                  # Accept decision
+hs adr-new TITLE="Use PostgreSQL"      # Create decision record
+hs adr-accept NUM=001                   # Accept decision
 
 # Productivity tracking
-make trends DAYS=7                       # 7-day productivity trends
+hs trends DAYS=7                        # 7-day productivity trends
 ```
 
 ## 📁 Directory Structure
 
 ```
 helmstack/
-├─ 📋 Makefile                    # 35+ commands
+├─ 🚀 Helmfile                    # hs runner interface (recommended)
+├─ 📋 Makefile                    # Legacy interface (47 commands)
 ├─ 📄 README.md                   # This file
 ├─ 📜 COMMANDS.md                 # Complete command reference
 ├─ 🔧 scripts/                    # All automation
 │  ├─ 🔍 analyzers/              # Pluggable analyzers
 │  ├─ 📊 analytics.py            # Session analytics
 │  ├─ 📋 adr.sh                  # Architecture decisions
+│  ├─ 🎨 help.sh                 # Colorized help system
 │  └─ 📝 templates.sh            # Template generator
-├─ 📁 workspace/
-│  ├─ 📥 incoming/               # Your source documents
-│  ├─ 📋 plans/                  # Generated plans
-│  ├─ 🔬 research/               # Research threads
+├─ 📁 workspace/                  # All project work files
+│  ├─ 📥 incoming/               # Source documents & specs
+│  ├─ 📋 plans/                  # Generated plans & status
+│  ├─ 🔬 research/               # Research threads (HITL)
 │  └─ 📦 processed/              # Archived inputs
-├─ 🧠 memory/                     # Persistent memory
-│  ├─ 📝 SUMMARY.md              # Project summary
-│  ├─ ⚖️  DECISIONS.md            # Decision log
-│  └─ ❓ OPEN_QUESTIONS.md       # Questions tracker
-├─ 📸 snapshots/                  # EOD snapshots
-└─ 📝 templates/                  # Document templates
+├─ 🧠 memory/                     # AI persistent memory
+│  ├─ 📝 MEMORY.md               # Comprehensive project memory
+│  ├─ 🎯 CONTEXT.md              # Quick session context
+│  └─ 📋 SUMMARY.md              # Project summary
+├─ 📸 snapshots/                  # End-of-day session snapshots
+├─ 📝 templates/                  # Document templates
+└─ 🏗️ docs/adr/                  # Architecture Decision Records
 ```
 
 ## 🔄 Core Workflow
@@ -179,10 +195,20 @@ Generate structured documents:
 
 ## 🚀 GitHub Integration
 
-Bootstrap your repository:
+Project creation and repository management:
 
 ```bash
-make setup  # Creates labels, milestones, issue templates
+# Complete project setup
+hs init NAME="MyProject" DESC="Description"
+cd MyProject
+hs repo NAME="MyProject" DESC="Description"
+hs publish
+
+# Bootstrap GitHub features
+hs setup  # Creates labels, milestones, issue templates
+
+# Pull request workflow
+hs pr TITLE="Feature name" BODY="Description of changes"
 ```
 
 **Created automatically:**
@@ -201,13 +227,24 @@ make setup  # Creates labels, milestones, issue templates
 ### From Template (Recommended)
 1. Click **"Use this template"** on GitHub
 2. Clone your new repository
-3. Run `make start NAME="YourProject" DESC="Description"`
+3. Run `hs start NAME="YourProject" DESC="Description"`
+
+### New Project Creation
+```bash
+# Initialize new project directory
+hs init NAME="MyProject" DESC="Project description"
+cd MyProject
+
+# Create GitHub repository and publish
+hs repo NAME="MyProject" DESC="Project description"
+hs publish
+```
 
 ### From Scratch
 ```bash
 git clone git@github.com:raufA1/HelmStack.git
 cd HelmStack
-make start NAME="YourProject" DESC="Description"
+hs start NAME="YourProject" DESC="Description"
 ```
 
 ### Dependencies
@@ -239,10 +276,14 @@ make yes  # Approve and add to next steps
 
 ### 3. Team Project
 ```bash
-make setup  # GitHub integration
-make adr-new TITLE="API Authentication Strategy"
+# Initialize and setup GitHub integration
+hs init NAME="TeamProject" DESC="Collaborative project"
+cd TeamProject
+hs repo NAME="TeamProject" DESC="Collaborative project"
+hs setup  # GitHub integration
+hs adr-new TITLE="API Authentication Strategy"
 # Team reviews and decides
-make adr-accept NUM=001
+hs adr-accept NUM=001
 ```
 
 ## 🔧 Configuration

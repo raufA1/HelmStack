@@ -1,0 +1,193 @@
+---
+name: Project Automation
+
+on:
+  issues:
+    types: [opened, labeled, closed, reopened]
+  pull_request:
+    types: [opened, closed, merged, ready_for_review]
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly on Monday at 9 AM UTC
+
+jobs:
+  issue-triage:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    name: Issue Triage
+
+    steps:
+      - name: Auto-label priority
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { issue } = context.payload;
+            const title = issue.title.toLowerCase();
+            const body = issue.body.toLowerCase();
+
+            // Auto-assign priority based on keywords
+            if (title.includes('[urgent]') || body.includes('urgent') || body.includes('critical')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['priority: high']
+              });
+            }
+
+            // Auto-assign type labels
+            if (title.includes('[bug]') || body.includes('bug report')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['type: bug']
+              });
+            }
+
+            if (title.includes('[feature]') || body.includes('feature request')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['type: feature']
+              });
+            }
+
+      - name: Welcome new contributors
+        if: github.event.action == 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { issue } = context.payload;
+
+            // Check if this is the author's first issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              creator: issue.user.login,
+              per_page: 2
+            });
+
+            if (issues.data.length === 1) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `👋 Welcome to HelmStack @${issue.user.login}! Thank you for your first contribution.
+
+                📖 While you wait for a maintainer to respond, you might want to check out:
+                - [Documentation](https://github.com/raufA1/HelmStack/blob/main/README.md)
+                - [Contributing Guidelines](https://github.com/raufA1/HelmStack/blob/main/.github/CONTRIBUTING.md)
+                - [Commands Reference](https://github.com/raufA1/HelmStack/blob/main/COMMANDS.md)
+
+                🚀 Get started with: \`hs start NAME="YourProject" DESC="Description"\``
+              });
+            }
+
+  pr-automation:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    name: PR Automation
+
+    steps:
+      - name: Auto-label PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { pull_request } = context.payload;
+            const additions = pull_request.additions;
+            const deletions = pull_request.deletions;
+            const changes = additions + deletions;
+
+            let sizeLabel = '';
+            if (changes < 10) sizeLabel = 'size: xs';
+            else if (changes < 50) sizeLabel = 'size: s';
+            else if (changes < 200) sizeLabel = 'size: m';
+            else if (changes < 500) sizeLabel = 'size: l';
+            else sizeLabel = 'size: xl';
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_request.number,
+              labels: [sizeLabel]
+            });
+
+      - name: Thank contributor on merge
+        if: github.event.action == 'closed' && github.event.pull_request.merged
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { pull_request } = context.payload;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pull_request.number,
+              body: `🎉 Thank you @${pull_request.user.login} for your contribution! Your changes have been merged and will be included in the next release.
+
+              🚀 Keep the momentum going:
+              - Star the repo if you found HelmStack useful
+              - Share your experience in [Discussions](https://github.com/raufA1/HelmStack/discussions)
+              - Consider contributing to other [open issues](https://github.com/raufA1/HelmStack/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)`
+            });
+
+  weekly-maintenance:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    name: Weekly Maintenance
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Close stale issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const staleDays = 30;
+            const staleDate = new Date();
+            staleDate.setDate(staleDate.getDate() - staleDays);
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'status: waiting for response',
+              per_page: 100
+            });
+
+            for (const issue of issues.data) {
+              const updatedAt = new Date(issue.updated_at);
+              if (updatedAt < staleDate) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: 'This issue has been automatically closed due to inactivity. If you believe this was closed in error, please reopen it and provide additional information.'
+                });
+
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  labels: [...issue.labels.map(l => l.name), 'status: stale']
+                });
+              }
+            }
+
+      - name: Update documentation stats
+        run: |
+          echo "📊 Repository Statistics ($(date))" > .github/STATS.md
+          echo "" >> .github/STATS.md
+          echo "- **Commands**: $(grep -c '^### `' COMMANDS.md)" >> .github/STATS.md
+          echo "- **Analyzers**: $(ls scripts/analyzers/*.py 2>/dev/null | wc -l)" >> .github/STATS.md
+          echo "- **Scripts**: $(ls scripts/*.sh scripts/*.py 2>/dev/null | wc -l)" >> .github/STATS.md
+          echo "- **Templates**: $(ls templates/*.md 2>/dev/null | wc -l)" >> .github/STATS.md
+          echo "- **Last Updated**: $(date -u)" >> .github/STATS.md
+
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .github/STATS.md || true
+          git commit -m "chore: update repository statistics [skip ci]" || exit 0
+          git push || exit 0

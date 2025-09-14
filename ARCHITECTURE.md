@@ -7,8 +7,9 @@ HelmStack is built around a clean separation of concerns with pluggable componen
 ```
 helmstack/
 ├── 📄 Core Config
-│   ├── Makefile              # Command orchestration
-│   ├── .pre-commit-config.yaml
+│   ├── Helmfile              # hs runner interface (recommended)
+│   ├── Makefile              # Legacy command orchestration
+│   ├── .pre-commit-config.yaml # Code quality & security
 │   └── .github/workflows/    # CI/CD automation
 │
 ├── 🔧 Scripts & Logic
@@ -67,13 +68,15 @@ snapshots/*.txt + git log → analytics.py → productivity metrics
 
 ## Component Architecture
 
-### Makefile - Command Orchestration
-Central command dispatch with 40+ commands organized by function:
-- Core workflow: start, fix, work, done
-- Analysis: analyze, epics, risks, ideas
-- Memory: memory, context, refresh
-- Research: ask, check, yes, no, end
-- Tools: templates, extract, setup
+### Command Orchestration
+**Helmfile (hs runner)** - Primary interface with enhanced GitHub integration:
+- Core workflow: `hs start`, `hs fix`, `hs work`, `hs done`
+- GitHub integration: `hs init`, `hs repo`, `hs publish`, `hs pr`
+- Analysis: `hs analyze`, `hs epics`, `hs ideas`, `hs milestones`
+- Memory: `hs memory`, `hs context`
+- Research: `hs ask`, `hs check`, `hs yes`, `hs no`, `hs end`
+
+**Makefile** - Legacy interface for backward compatibility (47 commands)
 
 ### Pluggable Analyzers
 Base class system for document analysis:

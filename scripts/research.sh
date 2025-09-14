@@ -34,18 +34,26 @@ case "$CMD" in
         sed -i 's/- \[ \] Under review/- [x] ✅ APPROVED/g' "$LAST/decision.md"
         echo "- Approved on: $(date '+%Y-%m-%d %H:%M')" >> "$LAST/decision.md"
 
-        # Log to memory
+        # Log to memory (ensure memory directory and files exist)
+        mkdir -p "$MEM_DIR"
+        [ -f "$MEM_DIR/DECISIONS.md" ] || echo "# Decision Log" > "$MEM_DIR/DECISIONS.md"
         echo "- $(date '+%Y-%m-%d %H:%M') ✅ APPROVED: $TOPIC_NAME" >> "$MEM_DIR/DECISIONS.md"
 
-        # Copy action items to NEXT_STEPS (prepend)
+        # Copy action items to NEXT_STEPS (prepend) with safety checks
         if [ -f "$LAST/actions.md" ]; then
-          TEMP_NEXT="/tmp/next_steps_temp.md"
+          mkdir -p "$PLANS_DIR"
+          TEMP_NEXT="/tmp/next_steps_temp_$$"  # Use PID for unique temp file
           echo "# NEXT_STEPS" > "$TEMP_NEXT"
           echo "" >> "$TEMP_NEXT"
-          echo "## From Research: $TOPIC_NAME" >> "$TEMP_NEXT"
-          grep "^- \[ \]" "$LAST/actions.md" >> "$TEMP_NEXT" || true
+          echo "## From Research: $TOPIC_NAME ($(date '+%Y-%m-%d'))" >> "$TEMP_NEXT"
+          grep "^- \[ \]" "$LAST/actions.md" >> "$TEMP_NEXT" 2>/dev/null || echo "- [ ] No specific action items defined" >> "$TEMP_NEXT"
           echo "" >> "$TEMP_NEXT"
-          tail -n +3 "$PLANS_DIR/NEXT_STEPS.md" >> "$TEMP_NEXT" 2>/dev/null || true
+
+          # Preserve existing NEXT_STEPS if it exists
+          if [ -f "$PLANS_DIR/NEXT_STEPS.md" ]; then
+            tail -n +3 "$PLANS_DIR/NEXT_STEPS.md" >> "$TEMP_NEXT" 2>/dev/null || true
+          fi
+
           mv "$TEMP_NEXT" "$PLANS_DIR/NEXT_STEPS.md"
         fi
 
@@ -59,7 +67,9 @@ case "$CMD" in
         sed -i 's/- \[ \] Under review/- [x] ❌ CHANGES REQUESTED/g' "$LAST/decision.md"
         echo "- Changes requested on: $(date '+%Y-%m-%d %H:%M')" >> "$LAST/decision.md"
 
-        # Log to memory
+        # Log to memory (ensure memory directory and files exist)
+        mkdir -p "$MEM_DIR"
+        [ -f "$MEM_DIR/DECISIONS.md" ] || echo "# Decision Log" > "$MEM_DIR/DECISIONS.md"
         echo "- $(date '+%Y-%m-%d %H:%M') ❌ CHANGES REQUESTED: $TOPIC_NAME" >> "$MEM_DIR/DECISIONS.md"
         echo "⏳ Changes requested for: $TOPIC_NAME";;
 

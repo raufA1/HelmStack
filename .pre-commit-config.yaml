@@ -29,7 +29,13 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-added-large-files
+        args: ['--maxkb=1000']
       - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+        files: ^scripts/.*\.(sh|py)$
+      - id: mixed-line-ending
+        args: ['--fix=lf']
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1
@@ -46,3 +52,17 @@ repos:
         language: system
         pass_filenames: false
         files: ^scripts/analyzers/.*\.py$
+
+      - id: helmstack-script-permissions
+        name: Ensure script executability
+        entry: bash -c 'chmod +x scripts/*.sh scripts/*.py 2>/dev/null || true'
+        language: system
+        pass_filenames: false
+        files: ^scripts/.*\.(sh|py)$
+
+      - id: helmstack-security-check
+        name: Basic security checks
+        entry: bash -c 'grep -r "password\|secret\|token\|key" --include="*.py" --include="*.sh" scripts/ && exit 1 || exit 0'
+        language: system
+        pass_filenames: false
+        files: ^scripts/.*\.(sh|py)$

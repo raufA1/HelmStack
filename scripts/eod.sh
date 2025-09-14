@@ -74,14 +74,18 @@ if [ -d .git ]; then
 
     # Push if remote exists (safe if it fails)
     if git remote get-url origin >/dev/null 2>&1; then
-        # Try to detect default branch
-        DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+        # Try to detect current branch and default branch
+        CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+        DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' 2>/dev/null || echo "main")
 
-        echo "🚀 Pushing to remote branch: $DEFAULT_BRANCH..."
-        git push origin "$DEFAULT_BRANCH" --tags 2>/dev/null || {
-            echo "⚠️ Push to $DEFAULT_BRANCH failed, trying 'main'..."
-            git push origin main --tags 2>/dev/null || {
-                echo "⚠️ Push to main failed too - maybe no network or auth issue"
+        echo "🚀 Pushing current branch '$CURRENT_BRANCH' and tags..."
+        git push origin "$CURRENT_BRANCH" --tags 2>/dev/null || {
+            echo "⚠️ Push to $CURRENT_BRANCH failed, trying default branch '$DEFAULT_BRANCH'..."
+            git push origin "$DEFAULT_BRANCH" --tags 2>/dev/null || {
+                echo "⚠️ Push to $DEFAULT_BRANCH failed, trying 'main'..."
+                git push origin main --tags 2>/dev/null || {
+                    echo "⚠️ All push attempts failed - check network/auth (branch: $CURRENT_BRANCH)"
+                }
             }
         }
     else

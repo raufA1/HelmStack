@@ -1,42 +1,45 @@
-# 📋 HelmStack Commands Reference
+# 📋 HelmStack Commands Reference (hs runner)
 
-Complete reference for all HelmStack commands, organized by function.
+Complete reference for all HelmStack commands using the **hs runner** interface.
+
+> **Setup:** Add `alias hs="hs-f Helmfile"` to your shell profile for the recommended hs experience.
 
 ## 🚀 Core Workflow
 
-### `make start`
+### `hs start`
 **Initialize new project with complete workspace structure**
 ```bash
-make start NAME="ProjectName" DESC="Project description"
+hs start NAME="ProjectName" DESC="Project description"
 ```
 - Creates all necessary directories (`workspace/`, `memory/`, `snapshots/`)
 - Sets up git repository if needed
 - Installs pre-commit hooks
 - Generates initial project document
+- **Alias:** `hs go`
 
-### `make fix`
+### `hs fix`
 **Refresh project plan from documents**
 ```bash
-make fix
+hs fix
 ```
 - Analyzes all documents in `workspace/incoming/`
 - Generates `STATUS.md` and `NEXT_STEPS.md`
 - Refreshes AI memory system
-- **Alias:** `make plan`
+- **Alias:** `hs plan`
 
-### `make work`
+### `hs work`
 **Generate focus list from next steps**
 ```bash
-make work
+hs work
 ```
 - Extracts top priorities from `NEXT_STEPS.md`
 - Creates `FOCUS_LIST.md` for daily work
 - Updates memory with current focus
 
-### `make done`
+### `hsdone`
 **Complete session with snapshot and git operations**
 ```bash
-make done
+hsdone
 ```
 - Creates timestamped snapshot
 - Commits all changes
@@ -46,54 +49,54 @@ make done
 
 ## 📄 Document Analysis
 
-### `make analyze`
+### `hsanalyze`
 **Analyze documents with pluggable analyzers**
 ```bash
-make analyze PATH=workspace/incoming
-make analyze PATH=specific-file.md
+hsanalyze PATH=workspace/incoming
+hsanalyze PATH=specific-file.md
 ```
 - Uses all available analyzers
 - Extracts tasks, epics, risks, metrics
 - Supports markdown, PDF, DOCX formats
 
-### `make epics`
+### `hsepics`
 **Extract project epics from documents**
 ```bash
-make epics
+hsepics
 ```
 - Identifies major project themes
 - Groups related tasks
 - Generates `EPICS.md`
 
-### `make milestones`
+### `hsmilestones`
 **Extract project milestones**
 ```bash
-make milestones
+hsmilestones
 ```
 - Identifies key project checkpoints
 - Creates timeline structure
 
-### `make ideas`
+### `hsideas`
 **Extract ideas and suggestions**
 ```bash
-make ideas
+hsideas
 ```
 - Captures innovative thoughts
 - Identifies improvement opportunities
 
-### `make risks`
+### `hsrisks`
 **Analyze risks and blockers**
 ```bash
-make risks
+hsrisks
 ```
 - Identifies potential problems
 - Assesses severity levels
 - Generates risk mitigation suggestions
 
-### `make blockers`
+### `hsblockers`
 **Show current blockers**
 ```bash
-make blockers
+hsblockers
 ```
 - Lists immediate obstacles
 - Shows blocker severity
@@ -101,28 +104,28 @@ make blockers
 
 ## 🧠 AI Memory System
 
-### `make memory`
+### `hsmemory`
 **Show comprehensive AI memory summary**
 ```bash
-make memory
+hsmemory
 ```
 - Displays complete project state
 - Includes all workspace analysis
 - Shows recent decisions and progress
 
-### `make context`
+### `hscontext`
 **Show quick context for current session**
 ```bash
-make context
+hscontext
 ```
 - Provides immediate next steps
 - Shows key file locations
 - Optimized for quick reference
 
-### `make refresh`
+### `hsrefresh`
 **Manually refresh AI memory**
 ```bash
-make refresh
+hsrefresh
 ```
 - Updates memory from all workspace files
 - Rebuilds comprehensive summary
@@ -130,46 +133,46 @@ make refresh
 
 ## 🔍 Research Workflow (HITL)
 
-### `make ask`
+### `hsask`
 **Start research thread**
 ```bash
-make ask TOPIC="Research question"
+hsask TOPIC="Research question"
 ```
 - Initiates human-in-the-loop research
 - Creates research workspace
 - Documents research question
 
-### `make check`
+### `hscheck`
 **Review research findings**
 ```bash
-make check
+hscheck
 ```
 - Summarizes research results
 - Presents findings for approval
 - Prepares decision point
 
-### `make yes`
+### `hsyes`
 **Approve research proposal**
 ```bash
-make yes
+hsyes
 ```
 - Accepts research findings
 - Integrates into project plans
 - Updates next steps
 
-### `make no`
+### `hsno`
 **Request research changes**
 ```bash
-make no
+hsno
 ```
 - Rejects current findings
 - Requests additional research
 - Maintains research thread
 
-### `make end`
+### `hsend`
 **Complete research thread**
 ```bash
-make end
+hsend
 ```
 - Closes research session
 - Archives findings
@@ -177,47 +180,47 @@ make end
 
 ## 📊 Analytics & Metrics
 
-### `make analytics`
+### `hsanalytics`
 **Session productivity analytics**
 ```bash
-make analytics
+hsanalytics
 ```
 - Shows current session metrics
 - Analyzes file changes
 - Calculates productivity scores
 
-### `make trends`
+### `hstrends`
 **Productivity trends over time**
 ```bash
-make trends DAYS=7
-make trends DAYS=30
+hstrends DAYS=7
+hstrends DAYS=30
 ```
 - Shows productivity patterns
 - Identifies work cycles
 - Default: 7 days
 
-### `make productivity`
+### `hsproductivity`
 **Real productivity metrics**
 ```bash
-make productivity
+hsproductivity
 ```
 - Git commit analysis
 - TODO completion rates
 - Session efficiency metrics
 
-### `make timeline`
+### `hstimeline`
 **Project timeline**
 ```bash
-make timeline
+hstimeline
 ```
 - Git commit history
 - Visual project evolution
 - Key milestone markers
 
-### `make snapshot`
+### `hssnapshot`
 **Create session snapshot**
 ```bash
-make snapshot
+hssnapshot
 ```
 - Captures current state
 - Documents session progress
@@ -225,37 +228,37 @@ make snapshot
 
 ## 🏗️ Architecture Decisions (ADR)
 
-### `make adr-new`
+### `hsadr-new`
 **Create new Architecture Decision Record**
 ```bash
-make adr-new TITLE="Decision title"
+hsadr-new TITLE="Decision title"
 ```
 - Creates numbered ADR file
 - Uses standard ADR template
 - Tracks decision context
 
-### `make adr-list`
+### `hsadr-list`
 **List all ADRs**
 ```bash
-make adr-list
+hsadr-list
 ```
 - Shows all decisions
 - Displays status (Proposed/Accepted/Rejected)
 - Ordered by creation date
 
-### `make adr-accept`
+### `hsadr-accept`
 **Accept ADR**
 ```bash
-make adr-accept ID=001
+hsadr-accept ID=001
 ```
 - Marks ADR as accepted
 - Updates decision status
 - Integrates into project plans
 
-### `make adr-reject`
+### `hsadr-reject`
 **Reject ADR**
 ```bash
-make adr-reject ID=001
+hsadr-reject ID=001
 ```
 - Marks ADR as rejected
 - Documents rejection reasons
@@ -263,30 +266,30 @@ make adr-reject ID=001
 
 ## 📝 Templates & Tools
 
-### `make template`
+### `hstemplate`
 **Generate templates**
 ```bash
-make template TYPE=todo FILE=tasks.md
-make template TYPE=spec FILE=requirements.md
-make template TYPE=adr FILE=decision.md
+hstemplate TYPE=todo FILE=tasks.md
+hstemplate TYPE=spec FILE=requirements.md
+hstemplate TYPE=adr FILE=decision.md
 ```
 - Creates structured templates
 - Supports multiple template types
 - Customizable content
 
-### `make templates`
+### `hstemplates`
 **List available templates**
 ```bash
-make templates
+hstemplates
 ```
 - Shows all template types
 - Displays usage examples
 
-### `make extract`
+### `hsextract`
 **Extract text from binary documents**
 ```bash
-make extract FILE=document.pdf OUTPUT=document.md
-make extract FILE=document.docx OUTPUT=document.md
+hsextract FILE=document.pdf OUTPUT=document.md
+hsextract FILE=document.docx OUTPUT=document.md
 ```
 - Converts PDF/DOCX to markdown
 - Preserves document structure
@@ -294,46 +297,46 @@ make extract FILE=document.docx OUTPUT=document.md
 
 ## 🔧 Status & Management
 
-### `make status`
+### `hsstatus`
 **Show current project status**
 ```bash
-make status
+hsstatus
 ```
 - Displays `STATUS.md` content
 - Shows project health
 - Key metrics overview
 
-### `make next`
+### `hsnext`
 **Show next steps**
 ```bash
-make next
+hsnext
 ```
 - Displays `NEXT_STEPS.md`
 - Priority-ordered tasks
 - Action items list
 
-### `make focus`
+### `hsfocus`
 **Show current focus list**
 ```bash
-make focus
+hsfocus
 ```
 - Displays `FOCUS_LIST.md`
 - Today's priorities
 - Actionable items only
 
-### `make clean`
+### `hsclean`
 **Clean generated files**
 ```bash
-make clean
+hsclean
 ```
 - Removes temporary snapshots
 - Cleans focus lists
 - Preserves source documents
 
-### `make log`
+### `hslog`
 **Show session log**
 ```bash
-make log
+hslog
 ```
 - Recent session activity
 - Change history
@@ -341,52 +344,52 @@ make log
 
 ## 🔗 Git & GitHub Integration
 
-### `make commit`
+### `hscommit`
 **Commit with message**
 ```bash
-make commit MSG="Commit message"
+hscommit MSG="Commit message"
 ```
 - Commits all changes
 - Requires commit message
 - Adds all modified files
 
-### `make push`
+### `hspush`
 **Push to remote**
 ```bash
-make push
+hspush
 ```
 - Pushes commits and tags
 - Safe operation (continues on failure)
 
-### `make gh-create`
+### `hsgh-create`
 **Create GitHub repository**
 ```bash
-make gh-create NAME="repo-name" DESC="Description" PRIVATE=true
+hsgh-create NAME="repo-name" DESC="Description" PRIVATE=true
 ```
 - Creates GitHub repository
 - Adds SSH remote
 - Configures for push
 
-### `make gh-push`
+### `hsgh-push`
 **Initial push to GitHub**
 ```bash
-make gh-push
+hsgh-push
 ```
 - First push to GitHub
 - Sets up tracking branch
 
-### `make pr`
+### `hspr`
 **Create Pull Request**
 ```bash
-make pr TITLE="PR Title" BODY="PR Description"
+hspr TITLE="PR Title" BODY="PR Description"
 ```
 - Creates GitHub Pull Request
 - Uses GitHub CLI
 
-### `make setup`
+### `hssetup`
 **Bootstrap GitHub integration**
 ```bash
-make setup
+hssetup
 ```
 - Complete GitHub setup
 - Repository creation
@@ -394,46 +397,46 @@ make setup
 
 ## 🛠️ Development & Quality
 
-### `make fix-lint`
+### `hsfix-lint`
 **Fix linting issues**
 ```bash
-make fix-lint
+hsfix-lint
 ```
 - Runs ruff with auto-fix
 - Resolves code quality issues
 - Python script linting
 
-### `make fix-format`
+### `hsfix-format`
 **Fix code formatting**
 ```bash
-make fix-format
+hsfix-format
 ```
 - Runs black formatter
 - Standardizes code style
 
-### `make fix-yaml`
+### `hsfix-yaml`
 **Fix YAML formatting**
 ```bash
-make fix-yaml
+hsfix-yaml
 ```
 - Validates YAML files
 - Checks workflow syntax
 
 ## 🔍 Advanced Analysis
 
-### `make analyzers`
+### `hsanalyzers`
 **List available analyzers**
 ```bash
-make analyzers
+hsanalyzers
 ```
 - Shows pluggable analyzers
 - Analyzer capabilities
 - Usage information
 
-### `make dependencies`
+### `hsdependencies`
 **Dependency analysis**
 ```bash
-make dependencies
+hsdependencies
 ```
 - Identifies project dependencies
 - Creates dependency map
@@ -441,19 +444,19 @@ make dependencies
 
 ## 📖 Help & Information
 
-### `make help`
+### `hshelp`
 **Show colorful help**
 ```bash
-make help
+hshelp
 ```
 - Complete command reference
 - Color-coded by category
 - Usage examples
 
-### `make version`
+### `hsversion`
 **Show HelmStack version**
 ```bash
-make version
+hsversion
 ```
 - Current version information
 - Repository link
@@ -482,18 +485,18 @@ make version
 
 ```bash
 # 1. Initialize project
-make start NAME="MyProject" DESC="Project description"
+hsstart NAME="MyProject" DESC="Project description"
 
 # 2. Add documents to workspace/incoming/
 
 # 3. Generate plan
-make fix
+hsfix
 
 # 4. Create focus list
-make work
+hswork
 
 # 5. Complete session
-make done
+hsdone
 ```
 
 **Total Commands:** 47 commands across 12 categories
