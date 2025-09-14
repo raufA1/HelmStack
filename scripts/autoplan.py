@@ -3,9 +3,38 @@ import sys, re, pathlib
 def read(p):
     try: return pathlib.Path(p).read_text(encoding="utf-8")
     except: return ""
+
 def ideas(text):
     return ["- [ ] " + re.sub(r"^\s*[-*]\s+","",ln).strip()
             for ln in text.splitlines() if re.match(r"^\s*[-*]\s+", ln)]
+
+def merge_ideas_idempotent(existing_content, new_ideas):
+    """Merge new ideas with existing NEXT_STEPS without duplicates"""
+    lines = existing_content.splitlines()
+
+    # Find existing tasks
+    existing_tasks = set()
+    for line in lines:
+        if line.strip().startswith("- [ ] "):
+            task_text = line.strip()[6:].strip()  # Remove "- [ ] " prefix
+            existing_tasks.add(task_text.lower())
+
+    # Add new unique tasks
+    new_tasks = []
+    for idea in new_ideas:
+        task_text = idea[6:].strip()  # Remove "- [ ] " prefix
+        if task_text.lower() not in existing_tasks:
+            new_tasks.append(idea)
+            existing_tasks.add(task_text.lower())
+
+    # Append new tasks to existing content
+    if new_tasks:
+        if not existing_content.strip().endswith('\n'):
+            existing_content += '\n'
+        existing_content += '\n'.join(new_tasks) + '\n'
+
+    return existing_content
+
 def main():
     import argparse; ap=argparse.ArgumentParser()
     ap.add_argument("--ideas", action="store_true")
@@ -14,10 +43,23 @@ def main():
     a=ap.parse_args(); inc=pathlib.Path(a.incoming); pl=pathlib.Path(a.plans); pl.mkdir(parents=True, exist_ok=True)
     docs = sorted(inc.glob("*.md"));
     if not docs: print("autoplan: no docs"); return
+
     if a.ideas:
+        # Extract ideas from all docs
         todo=[]; [todo.extend(ideas(read(d))) for d in docs]
-        (pl/"NEXT_STEPS.md").write_text("# NEXT_STEPS\n\n"+"\n".join(todo)+"\n", encoding="utf-8");
-        print("autoplan: NEXT_STEPS updated"); return
+
+        # Read existing NEXT_STEPS.md if it exists
+        next_steps_file = pl/"NEXT_STEPS.md"
+        if next_steps_file.exists():
+            existing_content = next_steps_file.read_text(encoding="utf-8")
+            updated_content = merge_ideas_idempotent(existing_content, todo)
+        else:
+            updated_content = "# NEXT_STEPS\n\n" + "\n".join(todo) + "\n"
+
+        next_steps_file.write_text(updated_content, encoding="utf-8")
+        print(f"autoplan: NEXT_STEPS updated with {len(todo)} ideas"); return
+
     out = ["# Project\n\n## Overview\n\n"] + [f"# Source: {d.name}\n{read(d)}\n---\n" for d in docs]
     pathlib.Path("README.md").write_text("".join(out), encoding="utf-8"); print("autoplan: README synthesized")
+
 if __name__ == "__main__": main()

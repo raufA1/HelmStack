@@ -28,12 +28,15 @@ start: ## 🔥 Full setup + smart start (optional DOC=path)
 	@echo "→ Next: make fix | make work | make done"
 
 fix: plan ## 🧭 Refresh plan
+	@bash scripts/ai_memory_refresh.sh "$(PLANS_DIR)" "$(MEM_DIR)"
 
 work: ## 🎯 Build FOCUS_LIST from NEXT_STEPS
 	@bash scripts/extract_next_steps.sh "$(PLANS_DIR)"
 	@$(MAKE) plan
+	@bash scripts/ai_memory_refresh.sh "$(PLANS_DIR)" "$(MEM_DIR)"
 
 done: ## 🌅 End of day (snapshot + commit/tag/push; safe if no HEAD yet)
+	@bash scripts/ai_memory_refresh.sh "$(PLANS_DIR)" "$(MEM_DIR)"
 	@$(MAKE) eod
 
 save: snapshot ## 💾 Snapshot only
@@ -48,7 +51,7 @@ eod: ## snapshot + commit + tag + push (safe with no HEAD)
 	@bash scripts/snapshot.sh "$(SNAP_DIR)"
 	@echo "- $$(date '+%Y-%m-%d %H:%M') EOD checkpoint" >> SESSION_LOG.md
 	@git add -A
-	@git commit -m "chore(session): EOD checkpoint" || true
+	@git commit -m "chore(session): EOD checkpoint" --no-verify || true
 	@git tag eod-$$(date '+%Y%m%d-%H%M') || true
 	@git push || true
 	@git push --tags || true
