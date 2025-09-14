@@ -1,0 +1,14 @@
+name: Docs Lint
+on:
+  push:
+    paths: ['workspace/**','.github/workflows/lint-docs.yml']
+  pull_request:
+    paths: ['workspace/**','.github/workflows/lint-docs.yml']
+jobs:
+  md-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v15
+        with:
+          globs: "workspace/**/*.md"

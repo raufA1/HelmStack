@@ -1,0 +1,31 @@
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.6.5
+    hooks: [{ id: ruff, args: ["--fix"] }]
+
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks: [{ id: black }]
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.14.0
+    hooks: [{ id: markdownlint-cli2 }]
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks: [{ id: yamllint }]
+
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: 3.2.0
+    hooks:
+      - id: editorconfig-checker
+        args: ["--disable-indentation"]
+        exclude: |
+          (?x)(
+            ^venv/|
+            ^\.venv/|
+            \.egg-info/|
+            ^dist/|
+            ^build/|
+            ^node_modules/
+          )

@@ -1,0 +1,521 @@
+1) Layihəni yarat
+mkdir helmstack && cd helmstack
+
+# qovluqlar
+mkdir -p scripts workspace/incoming workspace/processed workspace/plans workspace/research snapshots memory .github/workflows
+
+2) Kök faylları
+README.md
+# HelmStack
+
+A single, elastic repository that plans, tracks, and orchestrates work like a professional PM — **document-first**, **repo-as-memory**, and **human-in-the-loop** research.
+
+## Quick Start
+```bash
+# put any docs into workspace/incoming/*.md
+make start NAME="My Project" DESC="One-liner" DOC=spec.md
+make fix
+make work
+# ...do tasks...
+make done
+
+Folders
+
+workspace/incoming/ – your source docs (md/docx/pdf)
+
+workspace/plans/ – generated plan: STATUS.md, NEXT_STEPS.md, FOCUS_LIST.md
+
+workspace/research/ – research threads (ask/check/yes/no/end)
+
+workspace/processed/ – archived inputs
+
+memory/ – repo memory (SUMMARY.md, DECISIONS.md, …)
+
+snapshots/ – EOD and manual snapshots
+
+scripts/ – all helpers (bash/python)
+
+
+## `VISION.md`
+```md
+# Vision
+
+Build a document-first, elastic project workspace that:
+- turns any set of docs into an actionable plan,
+- keeps persistent memory inside the repo,
+- supports daily flow + research with human approval,
+- stays tool-agnostic and offline-friendly.
+
+Success = shorter time-to-plan, consistent execution, clear decisions, zero context loss.
+
+BRANDING.md
+# Branding — HelmStack
+
+- **Name:** HelmStack (steer your work with a reliable stack)
+- **Tone:** Calm, decisive, professional
+- **Command style:** `make start | fix | work | done | ask | yes | no | end | status ...`
+- **Artifacts:** All plans live under `workspace/plans/` (root stays clean)
+
+ARCHITECTURE.md
+# Architecture
+
+
+
+helmstack/
+├─ Makefile
+├─ scripts/ # shell & python helpers
+├─ workspace/
+│ ├─ incoming/ # input docs
+│ ├─ processed/ # archived inputs
+│ ├─ plans/ # STATUS.md / NEXT_STEPS.md / FOCUS_LIST.md
+│ └─ research/ # proposals, notes, decisions
+├─ memory/ # SUMMARY.md / DECISIONS.md / OPEN_QUESTIONS.md / GLOSSARY.md
+├─ snapshots/ # EOD snapshots
+└─ .github/workflows/ # optional CI (docs lint)
+
+
+**Pipelines**
+- Planning: `incoming/*.md` → `scripts/run_analyzer.sh` → `plans/*`
+- Focus: `scripts/extract_next_steps.sh` → `FOCUS_LIST.md`
+- Research (HITL): `scripts/research.sh` → proposals → approval → `NEXT_STEPS`
+- Memory: `scripts/ai_memory_refresh.sh` → `memory/SUMMARY.md`
+- EOD: `scripts/snapshot.sh` (+ commit/tag/push)
+
+ROADMAP.md
+# Roadmap
+
+## M1: Init (Weeks 1–2)
+- [ ] Plan pipeline from docs
+- [ ] Focus extractor
+- [ ] Research loop (ask/check/yes/no/end)
+- [ ] EOD snapshot + safe VCS ops
+- [ ] Repo memory refresh
+
+## M2: MVP (Weeks 3–4)
+- [ ] Better task extraction (headings→tasks)
+- [ ] CLI prompts templates
+- [ ] GitHub bootstrap (labels/milestones) via gh
+
+## M3: Pilot (Weeks 5–6)
+- [ ] Pluggable analyzers
+- [ ] Structured decisions (ADR-style)
+- [ ] Session analytics
+
+## M4: GA (Weeks 7–8)
+- [ ] Extensive docs + examples
+- [ ] CI hardening & pre-commit profile
+- [ ] Migration guides
+
+.gitignore
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Repo artifacts
+snapshots/
+workspace/processed/
+workspace/plans/FOCUS_LIST.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+.editorconfig
+root = true
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+max_line_length = 100
+
+.markdownlint.json
+{
+  "default": true,
+  "MD013": { "code_blocks": false, "line_length": 120 },
+  "MD033": false
+}
+
+.yamllint.yml
+extends: default
+rules:
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+  truthy:
+    allowed-values: ['true','false','on','off','yes','no']
+
+.pre-commit-config.yaml (Node-siz, sabit versiyalar)
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.6.5
+    hooks: [{ id: ruff, args: ["--fix"] }]
+
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks: [{ id: black }]
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.14.0
+    hooks: [{ id: markdownlint-cli2 }]
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks: [{ id: yamllint }]
+
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: 3.2.0
+    hooks:
+      - id: editorconfig-checker
+        args: ["--disable-indentation"]
+        exclude: |
+          (?x)(
+            ^venv/|
+            ^\.venv/|
+            \.egg-info/|
+            ^dist/|
+            ^build/|
+            ^node_modules/
+          )
+
+3) Skriptlər
+scripts/smart_start.sh
+#!/usr/bin/env bash
+set -e
+NAME="$1"; DESC="$2"; DOCS_DIR="$3"; INCOMING_DIR="$4"; PLANS_DIR="$5"
+mkdir -p "$DOCS_DIR" "$INCOMING_DIR" "$PLANS_DIR"
+if [ ! -f README.md ]; then
+cat > README.md <<EOF
+# ${NAME}
+
+${DESC}
+
+Generated by HelmStack.
+See \`${PLANS_DIR}\` for planning artifacts.
+EOF
+fi
+if [ ! -f "${PLANS_DIR}/STATUS.md" ]; then
+cat > "${PLANS_DIR}/STATUS.md" <<'EOF'
+# STATUS
+- Project initialized.
+- Run `make fix` to generate or refresh the plan.
+EOF
+fi
+echo "✅ Smart start ready. Docs root: ${DOCS_DIR}"
+
+scripts/run_analyzer.sh
+#!/usr/bin/env bash
+set -euo pipefail
+INCOMING_DIR="${1:-workspace/incoming}"
+PLANS_DIR="${2:-workspace/plans}"
+mkdir -p "$PLANS_DIR"
+DOC_SRC=""
+if ls "${INCOMING_DIR}"/*.md >/dev/null 2>&1; then
+  DOC_SRC=$(ls "${INCOMING_DIR}"/*.md | head -n1)
+fi
+{
+  echo "# STATUS"; echo
+  echo "- Updated: $(date '+%Y-%m-%d %H:%M')"
+  [ -n "$DOC_SRC" ] && echo "- Source doc: ${DOC_SRC}" || echo "- Source doc: (none)"
+  echo "- State: planning"
+} > "${PLANS_DIR}/STATUS.md"
+{
+  echo "# NEXT_STEPS"; echo
+  [ -n "$DOC_SRC" ] && grep -E '^[[:space:]]*[-*][[:space:]]+' "$DOC_SRC" \
+    | sed 's/^[[:space:]]*[-*][[:space:]]\+/- [ ] /' || true
+} > "${PLANS_DIR}/NEXT_STEPS.md"
+if ! grep -q "\[ \]" "${PLANS_DIR}/NEXT_STEPS.md"; then
+cat >> "${PLANS_DIR}/NEXT_STEPS.md" <<'EOF'
+- [ ] Define core data model
+- [ ] Implement storage layer
+- [ ] Implement CLI commands
+- [ ] Write README usage examples
+- [ ] Add tests
+EOF
+fi
+echo "✅ Updated: ${PLANS_DIR}/STATUS.md, ${PLANS_DIR}/NEXT_STEPS.md"
+
+scripts/extract_next_steps.sh
+#!/usr/bin/env bash
+set -euo pipefail
+PLANS_DIR="${1:-workspace/plans}"
+NEXT="${PLANS_DIR}/NEXT_STEPS.md"
+FOCUS="${PLANS_DIR}/FOCUS_LIST.md"
+[ -f "$NEXT" ] || { echo "WARN: $NEXT not found. Run 'make fix' first."; exit 0; }
+{
+  echo "# FOCUS_LIST"; echo
+  grep "^- \\[ \\]" "$NEXT" | head -n 10 || true
+} > "$FOCUS"
+grep -q "^- \\[ \\]" "$FOCUS" || echo "- [ ] Pick one actionable task and start." >> "$FOCUS"
+echo "✅ Focus ready: $FOCUS"
+
+scripts/snapshot.sh
+#!/usr/bin/env bash
+set -euo pipefail
+SNAP_DIR="${1:-snapshots}"
+mkdir -p "$SNAP_DIR"
+OUT="${SNAP_DIR}/snap-$(date '+%Y%m%d-%H%M%S').txt"
+{
+  echo "=== SNAPSHOT @ $(date '+%F %T') ==="; echo
+  echo "## git status"; git status -sb || true; echo
+  echo "## last commits"
+  if git rev-parse --verify HEAD >/dev/null 2>&1; then git --no-pager log --oneline -n 10 || true
+  else echo "(no commits yet)"; fi
+  echo; echo "## diff"
+  if git rev-parse --verify HEAD >/dev/null 2>&1; then git --no-pager diff || true
+  else echo "(no diff; repo has no commits yet)"; fi
+} > "$OUT"
+echo "✅ Snapshot: $OUT"
+
+scripts/research.sh
+#!/usr/bin/env bash
+set -euo pipefail
+CMD="${1:-}"; DIR="${2:-workspace/research}"; PLANS_DIR="${3:-workspace/plans}"; MEM_DIR="${4:-memory}"
+mkdir -p "$DIR"
+case "$CMD" in
+  ask)  TOPIC="${3:-${TOPIC:-}}"; [ -n "$TOPIC" ] || { echo "TOPIC required"; exit 1; }
+        TS="$(date '+%Y%m%d-%H%M%S')"; THREAD="$DIR/$TS"; mkdir -p "$THREAD"
+        printf "# Proposal: %s\n\n## Notes\n- \n" "$TOPIC" > "$THREAD/proposal.md"
+        echo "Created: $THREAD";;
+  check)LAST="$(ls -dt "$DIR"/* 2>/dev/null | head -n1 || true)"; [ -n "$LAST" ] || { echo "No threads"; exit 0; }
+        sed -n '1,120p' "$LAST/proposal.md" || true;;
+  yes)  LAST="$(ls -dt "$DIR"/* 2>/dev/null | head -n1 || true)"; [ -n "$LAST" ] || { echo "No threads"; exit 0; }
+        echo "- $(date '+%Y-%m-%d %H:%M') APPROVED: $(basename "$LAST")" >> "$MEM_DIR/DECISIONS.md"
+        echo "- [ ] Implement approved proposal: $(basename "$LAST")" >> "$PLANS_DIR/NEXT_STEPS.md"
+        echo "Approved.";;
+  no)   LAST="$(ls -dt "$DIR"/* 2>/dev/null | head -n1 || true)"; [ -n "$LAST" ] || { echo "No threads"; exit 0; }
+        echo "- $(date '+%Y-%m-%d %H:%M') CHANGES REQUESTED: $(basename "$LAST")" >> "$MEM_DIR/DECISIONS.md"
+        echo "Changes requested.";;
+  end)  LAST="$(ls -dt "$DIR"/* 2>/dev/null | head -n1 || true)"; [ -n "$LAST" ] || { echo "No threads"; exit 0; }
+        mv "$LAST" "${DIR}/archive_$(basename "$LAST")"; echo "Finalized.";;
+  *)    echo "Usage: research.sh [ask|check|yes|no|end]";;
+esac
+
+scripts/autoplan.py (stub)
+#!/usr/bin/env python3
+import sys, re, pathlib
+def read(p): 
+    try: return pathlib.Path(p).read_text(encoding="utf-8")
+    except: return ""
+def ideas(text):
+    return ["- [ ] " + re.sub(r"^\\s*[-*]\\s+","",ln).strip()
+            for ln in text.splitlines() if re.match(r"^\\s*[-*]\\s+", ln)]
+def main():
+    import argparse; ap=argparse.ArgumentParser()
+    ap.add_argument("--ideas", action="store_true")
+    ap.add_argument("incoming", nargs="?", default="workspace/incoming")
+    ap.add_argument("plans",    nargs="?", default="workspace/plans")
+    a=ap.parse_args(); inc=pathlib.Path(a.incoming); pl=pathlib.Path(a.plans); pl.mkdir(parents=True, exist_ok=True)
+    docs = sorted(inc.glob("*.md")); 
+    if not docs: print("autoplan: no docs"); return
+    if a.ideas:
+        todo=[]; [todo.extend(ideas(read(d))) for d in docs]
+        (pl/"NEXT_STEPS.md").write_text("# NEXT_STEPS\n\n"+"\n".join(todo)+"\n", encoding="utf-8"); 
+        print("autoplan: NEXT_STEPS updated"); return
+    out = ["# Project\n\n## Overview\n\n"] + [f"# Source: {d.name}\n{read(d)}\n---\n" for d in docs]
+    pathlib.Path("README.md").write_text("".join(out), encoding="utf-8"); print("autoplan: README synthesized")
+if __name__ == "__main__": main()
+
+scripts/bootstrap.sh (opsional)
+#!/usr/bin/env bash
+set -euo pipefail
+if ! command -v gh >/dev/null 2>&1; then
+  echo "gh CLI not found. Install & run: gh auth login"; exit 0; fi
+echo "Bootstrapping GitHub..."
+gh label create "ready" -c "#2ea44f" -d "Ready to work" 2>/dev/null || true
+gh label create "blocked" -c "#d73a4a" -d "Blocked" 2>/dev/null || true
+gh api -X POST repos/{owner}/{repo}/milestones -f title="M1: Init" 2>/dev/null || true
+gh api -X POST repos/{owner}/{repo}/milestones -f title="M2: MVP" 2>/dev/null || true
+echo "✅ Done."
+
+scripts/ai_memory_refresh.sh
+#!/usr/bin/env bash
+set -euo pipefail
+PLANS_DIR="${1:-workspace/plans}"; MEM_DIR="${2:-memory}"
+mkdir -p "$MEM_DIR"
+STATUS="$PLANS_DIR/STATUS.md"; NEXT="$PLANS_DIR/NEXT_STEPS.md"; FOCUS="$PLANS_DIR/FOCUS_LIST.md"
+SUMMARY="$MEM_DIR/SUMMARY.md"; DECISIONS="$MEM_DIR/DECISIONS.md"; OPEN_Q="$MEM_DIR/OPEN_QUESTIONS.md"; GLOSSARY="$MEM_DIR/GLOSSARY.md"
+touch "$DECISIONS" "$OPEN_Q" "$GLOSSARY"
+TOP=""; [ -f "$NEXT" ] && TOP="$(grep '^- \\[ \\]' "$NEXT" | head -n5)"
+{
+  echo "# Project Summary (Auto-refreshed)"; echo
+  echo "## Name"; basename "$(pwd)"; echo
+  echo "## Current Status (last update: $(date '+%Y-%m-%d %H:%M'))"
+  echo "- Milestone: M1 (init)"
+  echo "- Focus: (see FOCUS_LIST)"; echo
+  echo "## Decisions"; tail -n +2 "$DECISIONS" 2>/dev/null | head -n 10 || true; echo
+  echo "## Next Steps (top 5)"; [ -n "$TOP" ] && echo "$TOP" || echo "- [ ] Define initial actionable tasks"; echo
+  echo "## Files"; echo "- $STATUS"; echo "- $NEXT"; echo "- $FOCUS"
+} > "$SUMMARY"
+echo "✅ Memory refreshed → $SUMMARY"
+
+4) GitHub Workflow (opsional)
+.github/workflows/lint-docs.yml
+name: Docs Lint
+on:
+  push:
+    paths: ['workspace/**','.github/workflows/lint-docs.yml']
+  pull_request:
+    paths: ['workspace/**','.github/workflows/lint-docs.yml']
+jobs:
+  md-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v15
+        with:
+          globs: "workspace/**/*.md"
+
+5) Plan faylları və yaddaş
+workspace/plans/STATUS.md
+# STATUS
+- Project initialized via HelmStack.
+- Run `make fix` to generate/refresh the plan.
+
+workspace/plans/NEXT_STEPS.md
+# NEXT_STEPS
+- [ ] Define core data model
+- [ ] Implement storage layer
+- [ ] Implement CLI commands
+- [ ] Write README usage examples
+- [ ] Add tests
+
+memory/SUMMARY.md
+# Project Summary (Auto-refreshed)
+See: workspace/plans/STATUS.md, NEXT_STEPS.md, FOCUS_LIST.md
+
+
+memory/DECISIONS.md, memory/OPEN_QUESTIONS.md, memory/GLOSSARY.md – boş yaradın.
+
+6) Makefile
+Makefile
+SHELL := /usr/bin/env bash
+.SHELLFLAGS := -eo pipefail -c
+.DEFAULT_GOAL := help
+
+DOCS_DIR      ?= workspace
+INCOMING_DIR  ?= $(DOCS_DIR)/incoming
+PROCESSED_DIR ?= $(DOCS_DIR)/processed
+PLANS_DIR     ?= $(DOCS_DIR)/plans
+RESEARCH_DIR  ?= $(DOCS_DIR)/research
+SNAP_DIR      ?= snapshots
+MEM_DIR       ?= memory
+
+NAME ?= $(notdir $(CURDIR))
+DESC ?= Project initialized via HelmStack
+DOC  ?=
+GLOB ?=
+
+go: start ## alias
+
+start: ## 🔥 Full setup + smart start (optional DOC=path)
+	@mkdir -p "$(INCOMING_DIR)" "$(PROCESSED_DIR)" "$(PLANS_DIR)" "$(RESEARCH_DIR)" "$(SNAP_DIR)"
+	@if [ -n "$(DOC)" ]; then cp "$(DOC)" "$(INCOMING_DIR)/" && echo "✅ Added: $(DOC)"; fi
+	@if [ ! -d .git ]; then git init && echo "ℹ️ git init"; fi
+	@chmod +x scripts/*.sh 2>/dev/null || true
+	@chmod +x scripts/*.py 2>/dev/null || true
+	@if [ ! -f .helmstack_seeded ]; then pre-commit install || true; touch .helmstack_seeded; fi
+	@bash scripts/smart_start.sh "$(NAME)" "$(DESC)" "$(DOCS_DIR)" "$(INCOMING_DIR)" "$(PLANS_DIR)"
+	@echo "→ Next: make fix | make work | make done"
+
+fix: plan ## 🧭 Refresh plan
+
+work: ## 🎯 Build FOCUS_LIST from NEXT_STEPS
+	@bash scripts/extract_next_steps.sh "$(PLANS_DIR)"
+	@$(MAKE) plan
+
+done: ## 🌅 End of day (snapshot + commit/tag/push; safe if no HEAD yet)
+	@$(MAKE) eod
+
+save: snapshot ## 💾 Snapshot only
+
+plan: ## STATUS.md + NEXT_STEPS.md from docs
+	@bash scripts/run_analyzer.sh "$(INCOMING_DIR)" "$(PLANS_DIR)"
+
+resume: ## FOCUS_LIST from NEXT_STEPS
+	@bash scripts/extract_next_steps.sh "$(PLANS_DIR)"
+
+eod: ## snapshot + commit + tag + push (safe with no HEAD)
+	@bash scripts/snapshot.sh "$(SNAP_DIR)"
+	@echo "- $$(date '+%Y-%m-%d %H:%M') EOD checkpoint" >> SESSION_LOG.md
+	@git add -A
+	@git commit -m "chore(session): EOD checkpoint" || true
+	@git tag eod-$$(date '+%Y%m%d-%H%M') || true
+	@git push || true
+	@git push --tags || true
+
+snapshot: ## Diff/log snapshot
+	@bash scripts/snapshot.sh "$(SNAP_DIR)"
+
+ask:   ## 🔎 Start research thread (TOPIC="...")
+	@bash scripts/research.sh ask "$(RESEARCH_DIR)" "$(TOPIC)"
+check: ## 🧪 Summarize findings for review
+	@bash scripts/research.sh check "$(RESEARCH_DIR)"
+yes:   ## ✅ Approve proposal
+	@bash scripts/research.sh yes "$(RESEARCH_DIR)" "$(PLANS_DIR)" "$(MEM_DIR)"
+no:    ## ✏️ Request changes
+	@bash scripts/research.sh no "$(RESEARCH_DIR)"
+end:   ## 🗂 Finalize research
+	@bash scripts/research.sh end "$(RESEARCH_DIR)"
+
+build: ## 🛠 Doc→README synthesizer
+	@python3 scripts/autoplan.py "$(INCOMING_DIR)" "$(PLANS_DIR)" || true
+ideas: ## 💡 Extract TODOs from docs
+	@python3 scripts/autoplan.py --ideas "$(INCOMING_DIR)" "$(PLANS_DIR)" || true
+setup: ## ⚙️ GitHub bootstrap (via gh, optional)
+	@bash scripts/bootstrap.sh || true
+
+status: ## 📊 Show status
+	@sed -n '1,80p' "$(PLANS_DIR)/STATUS.md" 2>/dev/null || echo "No STATUS.md yet"
+next:   ## 📌 Show next steps
+	@sed -n '1,80p' "$(PLANS_DIR)/NEXT_STEPS.md" 2>/dev/null || echo "No NEXT_STEPS.md yet"
+focus:  ## 🎯 Show focus list
+	@sed -n '1,80p' "$(PLANS_DIR)/FOCUS_LIST.md" 2>/dev/null || echo "No FOCUS_LIST.md yet"
+log:    ## 📜 Show session log head
+	@sed -n '1,120p' SESSION_LOG.md 2>/dev/null || echo "No SESSION_LOG yet"
+
+clean:  ## 🧹 Clean generated
+	@rm -rf "$(SNAP_DIR)"/* 2>/dev/null || true
+	@find "$(PLANS_DIR)" -name "FOCUS_LIST.md" -delete 2>/dev/null || true
+	@echo "Cleaned snapshots and focus list."
+
+commit: ## 📝 Commit changes (MSG="...")
+	@[ -n "$(MSG)" ] || (echo "MSG is required: make commit MSG='...'" && exit 1)
+	@git add -A && git commit -m "$(MSG)"
+push:   ## ⬆️ Push and tags
+	@git push || true
+	@git push --tags || true
+
+help:   ## Show help
+	@echo ""; echo "🚀 HelmStack Commands"; echo ""
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' Makefile | sed -E 's/:.*?## /  - /'
+	@echo ""; echo "Docs: $(PLANS_DIR) | Input: $(INCOMING_DIR) | Memory: $(MEM_DIR)"; echo ""
+
+.PHONY: start go fix work done save plan resume eod snapshot ask check yes no end build ideas setup status next focus log clean commit push help
+
+7) İstifadə
+# 1) boş qovluq → faylları yuxarıdakı kimi əlavə et
+pre-commit install || true   # varsa
+
+# 2) sənədi at
+cp ~/your_spec.md workspace/incoming/spec.md
+
+# 3) axın
+make start NAME="TidyTasks" DESC="Personal task manager" DOC=workspace/incoming/spec.md
+make fix
+make work
+# ...iş...
+make done
+
