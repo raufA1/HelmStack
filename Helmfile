@@ -190,8 +190,6 @@ pr: ## 📋 Create Pull Request (TITLE="PR Title" BODY="PR Description")
 	@gh pr create --title "$(TITLE)" --body "$(BODY)"
 	@echo "✅ Pull Request created"
 
-analyzers: ## 🔍 List available analyzers
-	@python3 scripts/analyze.py --list-analyzers workspace/incoming
 
 blockers: ## 🚫 Show blockers from analysis
 	@python3 scripts/analyze.py --blockers workspace/incoming workspace/plans

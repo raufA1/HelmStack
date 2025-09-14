@@ -8,14 +8,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Clean template artifacts for better distribution
-- Normalized ADR folder structure (`docs/adr/`)
-- Comprehensive CHANGELOG.md with badges
-- Template repository cleanup improvements
+-
+
+### Changed
+-
 
 ### Fixed
-- ADR path references updated throughout codebase
-- Release artifact exclusions improved
+-
+
+## [2.0.0] - 2024-09-14
+
+🚀 **Major Release**: Complete transition to hs runner system with comprehensive GitHub integration
+
+### Added
+- **#9**: hs runner (Helmfile) - New primary interface replacing make commands
+- **#10**: GitHub integration commands - `hs init`, `hs repo`, `hs publish`, enhanced `hs pr`
+- **#11**: Colorized help system with grouped, colored command reference
+- **#12**: Enhanced workspace documentation and directory structure clarity
+- **#13**: Improved EOD stability with better branch detection and push reliability
+- **#14**: Enhanced AI Memory system with context tracking and task metrics
+- **#15**: Hardened Research (HITL) workflows with better error handling
+- **#16**: Pre-commit hardening with enhanced hooks and security checks
+- **#17**: Improved analysis outputs with better error handling for ideas/epics/milestones
+- **#18**: Complete documentation refresh - COMMANDS.md, VISION.md, ARCHITECTURE.md
+- **#19**: Professional GitHub template repository setup with issue/PR templates and CONTRIBUTING.md
+- **#20**: Comprehensive project automation workflows with health checks and lifecycle management
+
+### Changed
+- **BREAKING**: Primary interface changed from `make` to `hs` commands
+- Helmfile becomes the recommended interface (Makefile remains for legacy support)
+- All documentation updated to reflect hs runner system
+- Enhanced error handling across all workflow scripts
+
+### Fixed
+- Better branch detection and push logic in EOD workflows
+- Improved temp file handling in research workflows
+- Enhanced memory file creation safeguards
+- Comprehensive input validation across all new GitHub commands
+
+### Migration
+- Add to shell profile: `alias hs="make -f Helmfile"`
+- All existing `make` commands continue to work for backward compatibility
 
 ## [1.0.0-M5] - 2024-09-14
 
