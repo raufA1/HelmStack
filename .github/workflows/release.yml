@@ -1,0 +1,101 @@
+---
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    name: Create Release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "## Changes" >> $GITHUB_OUTPUT
+          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD~1)..HEAD >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: HelmStack ${{ github.ref_name }}
+          body: |
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            ## Installation
+
+            ```bash
+            git clone git@github.com:raufA1/HelmStack.git
+            cd HelmStack
+            make start NAME="YourProject" DESC="Description"
+            ```
+
+            ## What's New in This Release
+
+            See the commit log above for detailed changes.
+
+            ## Documentation
+
+            - [Getting Started](docs/GETTING_STARTED.md)
+            - [Commands Reference](COMMANDS.md)
+            - [Examples](examples/)
+          draft: false
+          prerelease: false
+
+  validate-release:
+    runs-on: ubuntu-latest
+    name: Validate Release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install python-docx PyPDF2
+
+      - name: Test release functionality
+        run: |
+          chmod +x scripts/*.sh scripts/*.py
+          mkdir -p workspace/incoming
+          echo "# Test Release Project" > workspace/incoming/test.md
+          echo "- Test task" >> workspace/incoming/test.md
+          bash scripts/run_analyzer.sh workspace/incoming workspace/plans
+          python3 scripts/autoplan.py --ideas workspace/incoming workspace/plans
+          bash scripts/extract_next_steps.sh workspace/plans
+          test -f workspace/plans/STATUS.md
+          test -f workspace/plans/NEXT_STEPS.md
+          test -f workspace/plans/FOCUS_LIST.md
+
+      - name: Create release artifact
+        run: |
+          tar -czf helmstack-${{ github.ref_name }}.tar.gz \
+            --exclude='.git*' \
+            --exclude='snapshots' \
+            --exclude='workspace/processed' \
+            --exclude='__pycache__' \
+            .
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: helmstack-release
+          path: helmstack-*.tar.gz
