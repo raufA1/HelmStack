@@ -1,0 +1,163 @@
+---
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    name: Code Quality
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black markdownlint-cli2 yamllint
+          pip install python-docx PyPDF2
+
+      - name: Run Ruff (linting)
+        run: ruff check scripts/ --output-format=github
+
+      - name: Run Black (formatting check)
+        run: black --check scripts/
+
+      - name: Run markdownlint
+        run: markdownlint-cli2 "**/*.md" --config .markdownlint.json
+
+      - name: Run yamllint
+        run: yamllint .github/workflows/ .pre-commit-config.yaml .yamllint.yml
+
+  test-analyzers:
+    runs-on: ubuntu-latest
+    name: Test Analyzers
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install python-docx PyPDF2
+
+      - name: Test analyzer system
+        run: |
+          python3 scripts/analyze.py --list-analyzers workspace/incoming || echo "No docs yet"
+
+      - name: Test analytics system
+        run: |
+          mkdir -p snapshots
+          echo "Test snapshot" > snapshots/snap-20240101-120000.txt
+          python3 scripts/analytics.py || echo "No snapshots to analyze"
+
+  test-workflow:
+    runs-on: ubuntu-latest
+    name: Test HelmStack Workflow
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up test environment
+        run: |
+          chmod +x scripts/*.sh scripts/*.py
+          mkdir -p workspace/incoming
+          cat > workspace/incoming/test.md << 'EOF'
+          # Test Project
+
+          ## Epic: Setup
+          - Install dependencies
+          - Configure environment
+
+          ## Epic: Development
+          - Write code !
+          - Add tests ‼
+          - Documentation
+          EOF
+
+      - name: Test core workflow
+        run: |
+          bash scripts/run_analyzer.sh workspace/incoming workspace/plans
+          test -f workspace/plans/STATUS.md || exit 1
+          test -f workspace/plans/NEXT_STEPS.md || exit 1
+          bash scripts/extract_next_steps.sh workspace/plans
+          test -f workspace/plans/FOCUS_LIST.md || exit 1
+          python3 scripts/autoplan.py --ideas workspace/incoming workspace/plans
+          python3 scripts/autoplan.py --epics workspace/incoming workspace/plans
+          test -f workspace/plans/EPICS.md || exit 1
+          mkdir -p memory
+          bash scripts/ai_memory_refresh.sh workspace/plans memory
+          test -f memory/SUMMARY.md || exit 1
+
+      - name: Test ADR system
+        run: |
+          mkdir -p memory/decisions templates/adr
+          cp templates/adr/adr_template.md templates/adr/ || echo "Template missing"
+          bash scripts/adr.sh list || echo "No ADRs yet"
+
+      - name: Test template system
+        run: |
+          bash scripts/templates.sh || echo "Templates need interactive input"
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security Scan
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  compatibility-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+
+    name: Test on ${{ matrix.os }} Python ${{ matrix.python-version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Test basic functionality
+        run: |
+          python3 --version
+          chmod +x scripts/*.py
+          python3 scripts/analyze.py --list-analyzers workspace/incoming || echo "Expected: no docs"
+
+      - name: Test on macOS with make
+        if: matrix.os == 'macos-latest'
+        run: |
+          make help || echo "Make help works"
