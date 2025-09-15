@@ -1,0 +1,163 @@
+# HelmStack Community Edition - hs runner interface
+# Usage: alias hs="make -f Helmfile"
+
+SHELL := /usr/bin/env bash
+.SHELLFLAGS := -eo pipefail -c
+.DEFAULT_GOAL := help
+
+# hs-specific variables
+HS_VERSION := 2.1.0-community
+HELMSTACK_ROOT := $(shell pwd)
+
+DOCS_DIR      ?= workspace
+INCOMING_DIR  ?= $(DOCS_DIR)/incoming
+PROCESSED_DIR ?= $(DOCS_DIR)/processed
+PLANS_DIR     ?= $(DOCS_DIR)/plans
+RESEARCH_DIR  ?= $(DOCS_DIR)/research
+SNAP_DIR      ?= snapshots
+
+NAME ?= $(notdir $(CURDIR))
+DESC ?= Project initialized via HelmStack Community Edition
+DOC  ?=
+
+# Aliases for common commands
+go: start ## 🚀 Alias for 'start' - quick project initialization
+plan: ## 🧭 Alias for 'fix' - refresh planning documents
+	@$(MAKE) fix
+
+start: ## 🔥 Initialize project with directory structure
+	@mkdir -p "$(INCOMING_DIR)" "$(PROCESSED_DIR)" "$(PLANS_DIR)" "$(RESEARCH_DIR)" "$(SNAP_DIR)"
+	@if [ -n "$(DOC)" ]; then cp "$(DOC)" "$(INCOMING_DIR)/" && echo "✅ Added: $(DOC)"; fi
+	@if [ ! -d .git ]; then git init && echo "ℹ️ git init"; fi
+	@chmod +x scripts/*.sh 2>/dev/null || true
+	@if [ ! -f .helmstack_seeded ]; then pre-commit install || true; touch .helmstack_seeded; fi
+	@bash scripts/smart_start.sh "$(NAME)" "$(DESC)" "$(DOCS_DIR)" "$(INCOMING_DIR)" "$(PLANS_DIR)"
+	@echo "→ Next: hs fix | hs work | hs done"
+
+fix: ## 🧭 Refresh plan (basic document analysis)
+	@bash scripts/basic_analyzer.sh "$(INCOMING_DIR)" "$(PLANS_DIR)"
+	@echo "📋 Basic plan refreshed. For AI-powered analysis, upgrade to HelmStack Pro!"
+
+work: ## 🎯 Build FOCUS_LIST from NEXT_STEPS
+	@bash scripts/extract_next_steps.sh "$(PLANS_DIR)"
+	@echo "🎯 Focus list created from next steps"
+
+done: ## 🌅 End of day - basic session wrap-up
+	@bash scripts/basic_eod.sh "$(SNAP_DIR)" "$(PLANS_DIR)"
+	@echo "✅ Session completed"
+
+# Core workflow commands
+status: ## 📊 Show current project status
+	@sed -n '1,80p' "$(PLANS_DIR)/STATUS.md" 2>/dev/null || echo "No STATUS.md yet - run 'hs fix' first"
+
+next: ## 📌 Show next steps
+	@sed -n '1,80p' "$(PLANS_DIR)/NEXT_STEPS.md" 2>/dev/null || echo "No NEXT_STEPS.md yet - run 'hs fix' first"
+
+focus: ## 🎯 Show current focus list
+	@sed -n '1,80p' "$(PLANS_DIR)/FOCUS_LIST.md" 2>/dev/null || echo "No FOCUS_LIST.md yet - run 'hs work' first"
+
+# Template and documentation
+template: ## 📄 Create template (TYPE=todo|spec|adr FILE=output.md)
+	@bash scripts/templates.sh "$(TYPE)" "$(FILE)" || echo "Usage: hs template TYPE=issue FILE=my-issue.md"
+
+adr-new: ## 📝 Create new ADR (TITLE="Decision title")
+	@bash scripts/adr.sh new "$(TITLE)" || echo "Usage: hs adr-new TITLE='Use PostgreSQL for database'"
+
+adr-list: ## 📋 List all ADRs
+	@bash scripts/adr.sh list
+
+# Environment and setup
+doctor: ## 🩺 Environment diagnostics and health check
+	@bash scripts/doctor.sh
+
+demo: ## 🎬 Run interactive demo with sample project
+	@bash scripts/demo.sh
+
+setup: ## ⚙️ GitHub bootstrap (via gh, optional)
+	@bash scripts/bootstrap.sh || true
+
+# Git operations
+commit: ## 📝 Commit changes (MSG="commit message")
+	@[ -n "$(MSG)" ] || (echo "MSG is required: hs commit MSG='...'" && exit 1)
+	@git add -A && git commit -m "$(MSG)"
+
+push: ## ⬆️ Push changes and tags
+	@git push || true
+	@git push --tags || true
+
+# Repository operations
+init: ## 🆕 Initialize new HelmStack project (NAME="ProjectName" DESC="Description")
+	@echo "🆕 Initializing new HelmStack Community project..."
+	@[ -n "$(NAME)" ] || (echo "❌ NAME is required: hs init NAME='MyProject' DESC='Description'" && exit 1)
+	@mkdir -p "$(NAME)"
+	@cp -r . "$(NAME)/" 2>/dev/null || true
+	@cd "$(NAME)" && rm -rf .git
+	@cd "$(NAME)" && git init
+	@cd "$(NAME)" && $(MAKE) -f Helmfile start NAME="$(NAME)" DESC="$(DESC)"
+	@echo "✅ New HelmStack Community project '$(NAME)' initialized"
+	@echo "📂 Next: cd $(NAME) && hs help"
+
+repo: ## 🏗️ Create GitHub repository (NAME="RepoName" DESC="Description" PRIVATE=true/false)
+	@echo "🏗️ Creating GitHub repository..."
+	@[ -n "$(NAME)" ] || (echo "❌ NAME is required: hs repo NAME='MyProject' DESC='Description'" && exit 1)
+	@if [ "$(PRIVATE)" = "true" ]; then \
+		gh repo create --private $(NAME) --description "$(DESC)" --clone=false; \
+	else \
+		gh repo create --public $(NAME) --description "$(DESC)" --clone=false; \
+	fi
+	@git remote add origin git@github.com:$(shell gh auth status | grep 'Logged in' | cut -d' ' -f6)/$(NAME).git || true
+	@echo "✅ Repository '$(NAME)' created and remote added"
+
+publish: ## 🚀 Initial push to GitHub (creates main branch)
+	@echo "🚀 Publishing to GitHub..."
+	@git add -A
+	@git commit -m "Initial commit via HelmStack Community Edition" || echo "ℹ️  Nothing to commit"
+	@git branch -M main
+	@git push -u origin main
+	@echo "✅ Published to GitHub on main branch"
+
+# Utility commands
+clean: ## 🧹 Clean generated files
+	@rm -rf "$(SNAP_DIR)"/* 2>/dev/null || true
+	@find "$(PLANS_DIR)" -name "FOCUS_LIST.md" -delete 2>/dev/null || true
+	@echo "Cleaned snapshots and focus list."
+
+version: ## 📋 Show HelmStack version
+	@echo "🚀 HelmStack Community Edition v$(HS_VERSION)"
+	@echo "Document-first project management for open source teams"
+	@echo "Repository: https://github.com/raufA1/HelmStack"
+	@echo ""
+	@echo "💡 Want more features? Upgrade to HelmStack Pro:"
+	@echo "   • AI-powered document analysis"
+	@echo "   • Advanced productivity metrics"
+	@echo "   • Research automation (HITL)"
+	@echo "   • Smart memory management"
+	@echo "   Learn more: https://helmstack.dev/pro"
+
+help: ## 📖 Show help message
+	@bash scripts/help.sh
+
+# Pro upgrade information
+upgrade: ## ✨ Learn about HelmStack Pro features
+	@echo ""
+	@echo "🚀 HelmStack Pro - Supercharge Your Productivity"
+	@echo "══════════════════════════════════════════════"
+	@echo ""
+	@echo "🤖 AI-Powered Features:"
+	@echo "   • hs ai-analyze     - AI document analysis"
+	@echo "   • hs ai-memory      - Smart context management"
+	@echo "   • hs ai-commit      - Intelligent commit messages"
+	@echo ""
+	@echo "📊 Advanced Analytics:"
+	@echo "   • hs metrics        - Comprehensive dashboard"
+	@echo "   • hs trends         - Productivity patterns"
+	@echo "   • hs snapshot-diff  - Session comparison"
+	@echo ""
+	@echo "🔎 Research Automation:"
+	@echo "   • hs ask/check/yes/no/end  - Human-in-the-loop research"
+	@echo "   • hs import-docs    - PDF/DOCX conversion"
+	@echo ""
+	@echo "🌐 Learn more: https://helmstack.dev/pro"
+	@echo ""
+
+.PHONY: start go fix work done status next focus template adr-new adr-list doctor demo setup commit push init repo publish clean version help upgrade

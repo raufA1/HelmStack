@@ -1,175 +1,261 @@
-# HelmStack Community Edition
+# 🚀 HelmStack Community Edition
 
-Open source project orchestration and workflow automation toolkit. This is the community edition of HelmStack, providing essential project management tools and workflow templates.
+[![Version](https://img.shields.io/badge/HelmStack-v2.1.0--community-blue.svg)](https://github.com/raufA1/HelmStack)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/raufA1/HelmStack.svg)](https://github.com/raufA1/HelmStack/stargazers)
 
-## Features
+> **Document-first project management for open source teams**
+>
+> Transform scattered documents into actionable project plans with the power of structured workflows.
 
-- **Project Templates**: Ready-to-use project structures and workflows
-- **Basic Automation**: Essential workflow automation tools
-- **Documentation Tools**: Project documentation and status tracking
-- **Community Workflows**: Shared workflows and best practices
-- **Integration Examples**: Basic integrations with popular tools
+## ✨ What is HelmStack?
 
-## Quick Start
+HelmStack is a document-first project management system that helps developers and teams:
+
+- **🔄 Transform documents into actionable plans** - Drop docs in `workspace/incoming/`, get organized plans out
+- **🎯 Focus on what matters** - Auto-generated focus lists from your project docs
+- **📊 Track progress systematically** - Session-based workflow with built-in snapshots
+- **🏗️ Integrate with GitHub seamlessly** - Repository setup, issue templates, and automation
+
+**Perfect for:** Open source projects, documentation-heavy work, research projects, and teams that think in documents first.
+
+## 🚀 Quick Start
+
+### Installation
 
 ```bash
-# Install HelmStack Community Edition
-git clone https://github.com/your-org/helmstack.git
-cd helmstack
+# 1. Clone HelmStack Community Edition
+git clone https://github.com/raufA1/HelmStack.git MyProject
+cd MyProject
 
-# Initialize a new project
-./bin/hs init myproject
+# 2. Set up the hs command
+alias hs="make -f Helmfile"
 
-# Use basic workflows
-./bin/hs workflow list
-./bin/hs workflow run basic-setup
+# 3. Initialize your project
+hs start
 
-# Generate project documentation
-./bin/hs docs generate
+# 4. See what's possible
+hs help
 ```
 
-## Available Workflows
+### Basic Workflow
 
-### Project Setup
-- **basic-setup**: Initialize basic project structure
-- **git-flow**: Set up Git workflow with branches and hooks
-- **docs-template**: Create documentation template
-- **ci-basic**: Basic CI/CD pipeline setup
-
-### Documentation
-- **readme-template**: Generate comprehensive README
-- **changelog**: Automated changelog generation
-- **api-docs**: API documentation templates
-- **project-status**: Status reporting templates
-
-### Development
-- **code-review**: Code review workflow templates
-- **testing-setup**: Testing framework setup
-- **deployment-basic**: Basic deployment workflows
-- **monitoring**: Basic monitoring and alerting
-
-## Templates
-
-### Project Templates
-```
-templates/
-├── web-app/           # Web application template
-├── api-service/       # REST API service template
-├── library/           # Library/package template
-├── documentation/     # Documentation site template
-└── microservice/      # Microservice template
-```
-
-### Workflow Templates
-```
-workflows/
-├── ci-cd/            # CI/CD pipeline templates
-├── deployment/       # Deployment workflows
-├── testing/          # Testing workflows
-├── documentation/    # Documentation workflows
-└── monitoring/       # Monitoring workflows
-```
-
-## Examples
-
-### Basic Project Setup
 ```bash
-# Create new project from template
-hs template create web-app my-web-app
+# Daily workflow - just 3 commands!
+hs fix    # 🧭 Refresh plans from documents
+hs work   # 🎯 Create focus list
+hs done   # ✅ Complete session
 
-# Set up Git workflow
-cd my-web-app
-hs workflow run git-flow
-
-# Generate documentation
-hs docs generate
+# Check your progress
+hs status # 📊 Current project status
+hs focus  # 🎯 Today's focus items
 ```
 
-### Workflow Automation
+## 📁 How It Works
+
+### 1. **Document-First Approach**
+```
+workspace/
+├── incoming/     # 📥 Drop your docs here (any format)
+├── plans/        # 📋 Generated STATUS.md, NEXT_STEPS.md
+└── research/     # 🔬 Research and findings
+```
+
+### 2. **Structured Workflow**
 ```bash
-# List available workflows
-hs workflow list
-
-# Run workflow with parameters
-hs workflow run ci-basic --platform github
-
-# Create custom workflow
-hs workflow create my-custom-workflow
+hs start  # 🔥 Set up project structure
+hs fix    # 🧭 Analyze docs → generate plans
+hs work   # 🎯 Extract focus list from plans
+hs done   # ✅ Create session snapshot
 ```
 
-### Status Tracking
+### 3. **GitHub Integration**
 ```bash
-# Generate project status
-hs status
-
-# Create status report
-hs status --format markdown > STATUS.md
-
-# Track project metrics
-hs metrics collect
+hs repo NAME="MyProject" DESC="Description"  # Create GitHub repo
+hs publish                                   # Push to GitHub
+hs setup                                     # Configure labels & templates
 ```
 
-## Community
+## 🛠️ Core Features
 
-- **GitHub**: https://github.com/your-org/helmstack
-- **Discussions**: https://github.com/your-org/helmstack/discussions
-- **Issues**: https://github.com/your-org/helmstack/issues
-- **Wiki**: https://github.com/your-org/helmstack/wiki
+### 📊 Project Management
+- **Document Analysis** - Basic parsing and organization
+- **Plan Generation** - STATUS.md and NEXT_STEPS.md creation
+- **Focus Lists** - Daily prioritization from your plans
+- **Session Snapshots** - Track progress over time
 
-## Contributing
+### 🏗️ GitHub Integration
+- **Repository Creation** - `hs repo` command
+- **Template System** - Issue and PR templates
+- **ADR Support** - Architecture Decision Records
+- **Automation Setup** - Labels, milestones, workflows
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+### 🔧 Development Tools
+- **Environment Health Check** - `hs doctor` diagnostics
+- **Interactive Demo** - `hs demo` for new users
+- **Template Generator** - Custom templates for any workflow
+- **Pre-commit Integration** - Code quality automation
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## 📖 Commands Reference
 
-## Pro Edition
+### Core Workflow
+| Command | Description | Example |
+|---------|-------------|---------|
+| `hs start` | Initialize project | `hs start` |
+| `hs fix` | Refresh plans | `hs fix` |
+| `hs work` | Create focus list | `hs work` |
+| `hs done` | Complete session | `hs done` |
 
-For advanced features including AI-powered automation, enterprise integrations, and professional support, check out [HelmStack Pro Edition](https://helmstack.dev/pro).
+### GitHub Integration
+| Command | Description | Example |
+|---------|-------------|---------|
+| `hs repo` | Create GitHub repo | `hs repo NAME="MyProject"` |
+| `hs publish` | Push to GitHub | `hs publish` |
+| `hs setup` | Configure GitHub features | `hs setup` |
 
-### Pro Features
-- 🤖 **AI-Powered Planning**: Intelligent project planning and task prioritization
-- 🔗 **Advanced Integrations**: GitHub, Slack, JIRA, and custom API connectors
-- 📊 **Analytics Dashboard**: Comprehensive project insights and reporting
-- 🚀 **Automated Workflows**: Advanced automation with custom triggers
-- 🎯 **Smart Recommendations**: AI-driven optimization suggestions
-- 👥 **Team Collaboration**: Advanced team features and permissions
-- 🛠️ **Custom Addons**: Extensible plugin architecture
-- 🔒 **Enterprise Security**: SSO, audit logs, compliance features
+### Templates & Docs
+| Command | Description | Example |
+|---------|-------------|---------|
+| `hs template` | Generate templates | `hs template TYPE=issue FILE=bug.md` |
+| `hs adr-new` | Create ADR | `hs adr-new TITLE="Use PostgreSQL"` |
 
-## Architecture
+### Status & Info
+| Command | Description | Example |
+|---------|-------------|---------|
+| `hs status` | Show project status | `hs status` |
+| `hs focus` | Show focus list | `hs focus` |
+| `hs doctor` | Environment check | `hs doctor` |
+| `hs help` | Show all commands | `hs help` |
 
+## 🎯 Example Workflow
+
+```bash
+# 1. Start a new project
+mkdir MyAwesomeProject && cd MyAwesomeProject
+hs init NAME="MyAwesome" DESC="An awesome open source project"
+
+# 2. Add some documents
+echo "# Project Vision\nBuild something amazing..." > workspace/incoming/vision.md
+echo "# Requirements\n- Feature A\n- Feature B" > workspace/incoming/requirements.md
+
+# 3. Generate your first plan
+hs fix
+# ✅ Created: workspace/plans/STATUS.md
+# ✅ Created: workspace/plans/NEXT_STEPS.md
+
+# 4. Create focus list for today
+hs work
+# ✅ Created: workspace/plans/FOCUS_LIST.md
+
+# 5. Check what to focus on
+hs focus
+# 🎯 Today's Focus:
+# - [ ] Set up basic project structure
+# - [ ] Define core requirements
+# - [ ] Create initial documentation
+
+# 6. End your session
+hs done
+# ✅ Session snapshot saved: snapshots/snap-2024-01-15-14-30.txt
 ```
-HelmStack Community Edition
-├── Core Engine (Open Source)
-│   ├── Project Templates
-│   ├── Basic Workflows
-│   ├── Documentation Tools
-│   └── Status Tracking
-├── Templates Library
-│   ├── Project Types
-│   ├── Workflow Templates
-│   └── Integration Examples
-└── Community Features
-    ├── Shared Workflows
-    ├── Best Practices
-    └── Contribution Tools
+
+## ✨ Upgrade to HelmStack Pro
+
+Love HelmStack Community Edition? **HelmStack Pro** supercharges your productivity with:
+
+### 🤖 AI-Powered Features
+- **Smart Document Analysis** - AI extracts epics, milestones, and tasks
+- **Intelligent Commit Messages** - Context-aware git commits
+- **Memory Management** - AI remembers your project context across sessions
+
+### 📊 Advanced Analytics
+- **Productivity Dashboard** - Comprehensive metrics and insights
+- **Trend Analysis** - Track your productivity patterns over time
+- **Session Comparisons** - Visual diffs between work sessions
+
+### 🔎 Research Automation
+- **Human-in-the-Loop Research** - `ask/check/yes/no/end` workflow
+- **Document Conversion** - PDF/DOCX to structured Markdown
+- **Advanced Analyzers** - Risk assessment, scope analysis, dependencies
+
+### ⚡ Advanced Automation
+- **Project Automation** - Smart workflows and triggers
+- **GitHub Project Integration** - Automatic board updates
+- **Self-Update System** - Stay current with latest features
+
+**[Learn More About HelmStack Pro →](https://helmstack.dev/pro)**
+
+## 🤝 Contributing
+
+We love contributions! HelmStack Community Edition is open source and welcomes:
+
+- 🐛 **Bug Reports** - Found an issue? [Open an issue](https://github.com/raufA1/HelmStack/issues)
+- 💡 **Feature Requests** - Have an idea? [Start a discussion](https://github.com/raufA1/HelmStack/discussions)
+- 🔧 **Pull Requests** - Want to help? Check our [contributing guide](CONTRIBUTING.md)
+- 📚 **Documentation** - Improve our docs and examples
+
+### Development Setup
+
+```bash
+git clone https://github.com/raufA1/HelmStack.git
+cd HelmStack
+./scripts/doctor.sh  # Check environment
+./scripts/demo.sh    # Try the interactive demo
 ```
 
-## License
+## 📋 Requirements
 
-MIT License - see [LICENSE](LICENSE) for details.
+- **Git** - Version control
+- **Bash** - Shell scripting (available on macOS, Linux, Windows/WSL)
+- **GitHub CLI** (optional) - For GitHub integration features
+- **Pre-commit** (optional) - For code quality hooks
 
-## Ecosystem
+Run `hs doctor` to check your environment!
 
-- **helmstack**: Community Edition (this repository)
-- **helmstack-templates**: Additional templates and examples
-- **helmstack-docs**: Documentation and guides
-- **helmstack-examples**: Real-world usage examples
+## 🗺️ Roadmap
+
+### Community Edition
+- [ ] Enhanced template system
+- [ ] Basic workflow automation
+- [ ] Multi-language support
+- [ ] Plugin architecture
+- [ ] Web UI (read-only)
+
+### HelmStack Pro
+- [ ] Advanced AI integrations
+- [ ] Real-time collaboration
+- [ ] Enterprise SSO
+- [ ] SaaS hosting option
+- [ ] Mobile companion app
+
+## 📄 License
+
+HelmStack Community Edition is MIT licensed. See [LICENSE](LICENSE) for details.
+
+## 🙏 Acknowledgments
+
+Built with love by the HelmStack team. Special thanks to:
+
+- The open source community for inspiration and feedback
+- Contributors who help make HelmStack better
+- Early adopters who believed in document-first workflows
+
+## 🔗 Links
+
+- **Website:** [helmstack.dev](https://helmstack.dev)
+- **Documentation:** [docs.helmstack.dev](https://docs.helmstack.dev)
+- **Community:** [Discussions](https://github.com/raufA1/HelmStack/discussions)
+- **Pro Edition:** [helmstack.dev/pro](https://helmstack.dev/pro)
+- **Support:** [GitHub Issues](https://github.com/raufA1/HelmStack/issues)
 
 ---
 
-**HelmStack Community Edition** - Open source project orchestration for everyone.
+<div align="center">
+
+**⭐ Star this repo if HelmStack helps you!**
+
+**[Try HelmStack Pro](https://helmstack.dev/pro)** • **[Join Community](https://github.com/raufA1/HelmStack/discussions)** • **[Contribute](CONTRIBUTING.md)**
+
+*Made with ❤️ for document-driven teams*
+
+</div>

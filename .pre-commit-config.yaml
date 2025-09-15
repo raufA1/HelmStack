@@ -1,0 +1,68 @@
+---
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.6.5
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        files: ^scripts/.*\.py$
+
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        files: ^scripts/.*\.py$
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        files: \.(yml|yaml)$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.md$
+      - id: end-of-file-fixer
+        exclude: \.md$
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+        files: ^scripts/.*\.(sh|py)$
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: ^scripts/.*\.sh$
+        args: ["-x", "-e", "SC2129", "-e", "SC2012", "-e", "SC2155", "-e", "SC2015", "-e", "SC2001", "-e", "SC2034"]
+
+  - repo: local
+    hooks:
+      - id: helmstack-analyzer-test
+        name: Test HelmStack Analyzers
+        entry: python3 scripts/analyze.py --list-analyzers workspace/incoming
+        language: system
+        pass_filenames: false
+        files: ^scripts/analyzers/.*\.py$
+
+      - id: helmstack-script-permissions
+        name: Ensure script executability
+        entry: bash -c 'chmod +x scripts/*.sh scripts/*.py 2>/dev/null || true'
+        language: system
+        pass_filenames: false
+        files: ^scripts/.*\.(sh|py)$
+
+      - id: helmstack-security-check
+        name: Basic security checks
+        entry: bash -c 'grep -r "password\|secret\|token\|key" --include="*.py" --include="*.sh" scripts/ && exit 1 || exit 0'
+        language: system
+        pass_filenames: false
+        files: ^scripts/.*\.(sh|py)$
